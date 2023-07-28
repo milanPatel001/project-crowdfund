@@ -1,0 +1,44 @@
+//server
+
+
+//importing module
+//http module to create http server, it's a part of node.js and uses tcp connection
+const http = require('http');
+//socket.io for real time bidirectional communication between server and client, also uses tcp
+const socketIO = require('socket.io');
+
+//creating http server
+const server = http.createServer();
+//initialize socket.io and pasiing http server as argument to socketIO 
+//which gives io instent which can be used to listen for incoming socket connection and events
+const ioserver = socketIO(server);
+
+//Port number that server listens for incoming connection
+const port = 3000;
+
+//this function listens to incoming tcp connection and fires a callback function
+ioserver.on('connection', (socket) => {
+  //A welcome massage when new user is connceted
+  console.log('A new client is connected.');
+
+  //this is to handle any communication with the client
+  //when a server listens for a event "message" by client it receives the message
+  //and emit to all the clients the server is connected to
+  socket.on('new message', (message) => {
+    console.log('Message received:', message);
+    //broadcasting massage to all the clients
+    ioserver.emit('new message', message);
+  });
+
+  //Server listens for the disconnect event
+  //when disconnects it closes tcp connection
+  socket.on('disconnect', () => {
+    console.log('A client just disconnected.');
+  });
+});
+
+
+//it starts the server that listen to a spicified port
+server.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
