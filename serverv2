@@ -1,0 +1,27 @@
+//server.js
+const net = require('net');
+
+const PORT = 3000;
+
+const server = net.createServer((socket) => {
+  console.log('A new client is connected.');
+
+  socket.on('data', (data) => {
+    const message = data.toString().trim();
+    console.log('Message from client:', message);
+
+    socket.write(`Server received: ${message}\r\n`);
+  });
+
+  socket.on('end', () => {
+    console.log('A Client just disconnected.');
+  });
+
+  socket.on('error', (err) => {
+    console.error('Socket error:', err);
+  });
+});
+
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
