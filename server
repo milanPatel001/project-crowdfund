@@ -14,7 +14,7 @@ const server = http.createServer();
 const ioserver = socketIO(server);
 
 //Port number that server listens for incoming connection
-const port = 3000;
+const port = 65535;
 
 //this function listens to incoming tcp connection and fires a callback function
 ioserver.on('connection', (socket) => {
