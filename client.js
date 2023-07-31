@@ -7,16 +7,16 @@ const readlineInterface = readline.createInterface({
   output: process.stdout,
 });
 
+const SERVER_URL = "http://98.113.25.59:65535"; // Replace with the server's IP address and port
+const SERVER_URL_LOCAL = "http://localhost:3000";
+
+const socket = socketIOClient(SERVER_URL_LOCAL);
+
 function ask(questionText) {
   return new Promise((resolve, reject) => {
     readlineInterface.question(questionText, (input) => resolve(input));
   });
 }
-
-const SERVER_URL = "http://98.113.25.59:65535"; // Replace with the server's IP address and port
-const SERVER_URL_LOCAL = "http://localhost:3000";
-
-const socket = socketIOClient(SERVER_URL_LOCAL);
 
 socket.on("connect", async () => {
   console.log("Connected to server!");
@@ -31,7 +31,7 @@ socket.on("new message", (data) => {
 });
 
 socket.on("donation", (value) => {
-  console.log("Current total value", value);
+  console.log("\nCurrent total donation amount: ", value, "\n");
 });
 
 socket.on("disconnect", () => {
@@ -43,9 +43,13 @@ let option = "";
 async function startInteractiveLoop() {
   while (option !== "q") {
     await setTimeout(1000);
-    option = await ask("Option: ");
+
+    console.log("Select an option");
+    console.log("1. Donate\nq. Disconnect from the server.");
+
+    option = await ask("\nEnter Option: ");
     if (option === "1") {
-      let donation = await ask("Donation: ");
+      let donation = await ask("Enter a donation amount: ");
       donation = Number(donation);
 
       socket.emit("donate", donation);
