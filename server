@@ -14,7 +14,8 @@ const server = http.createServer();
 const ioserver = socketIO(server);
 
 //Port number that server listens for incoming connection
-const port = 3000;
+const port = 65535;
+let value = 0;
 
 //this function listens to incoming tcp connection and fires a callback function
 ioserver.on('connection', (socket) => {
@@ -28,6 +29,15 @@ ioserver.on('connection', (socket) => {
     console.log('Message received:', message);
     //broadcasting massage to all the clients
     ioserver.emit('new message', message);
+  });
+
+  socket.on("donate", (donation) => {
+    value += donation;
+    ioserver.emit("donation", value);
+  });
+
+  socket.on("quit", () => {
+    socket.disconnect();
   });
 
   //Server listens for the disconnect event
