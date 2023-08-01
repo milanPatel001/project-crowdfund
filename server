@@ -13,7 +13,7 @@ const server = http.createServer();
 const ioserver = socketIO(server);
 
 //Port number that server listens for incoming connection
-const port = 65535;
+const port = 3000;
 
 const values = [0, 0, 0, 0, 0];
 const funds = [
@@ -52,7 +52,13 @@ ioserver.on("connection", (socket) => {
       funds[donationData.index]
     );
     values[donationData.index] += donationData.amount;
-    //ioserver.emit("donation", value);
+
+    //broadcasts to every client
+    ioserver.emit("donation", {
+      socketId: clients.get(socket.id),
+      amount: donationData.amount,
+      fundIndex: donationData.index,
+    });
   });
 
   socket.on("donation amount request", (data) => {
@@ -72,7 +78,7 @@ ioserver.on("connection", (socket) => {
   });
 });
 
-//it starts the server that listen to a spicified port
+//it starts the server that listen to a specified port
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
