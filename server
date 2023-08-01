@@ -26,7 +26,7 @@ const funds = [
 
 const clients = new Map();
 let idIndex = 0;
-const idCheck = [false, false];
+const idCheck = [false, false, false, false]; //used in checking for free ids (supports only 4 ids for now)
 
 ioserver.on("connection", (socket) => {
   assignClientId(socket.id);
@@ -41,6 +41,7 @@ ioserver.on("connection", (socket) => {
     ioserver.emit("new message", message);
   });
 
+  //listens for any donations by clients and then stores them
   socket.on("donate", (donationData) => {
     console.log(
       "Client",
@@ -77,11 +78,16 @@ server.listen(port, () => {
 });
 
 function assignClientId(id) {
-  if (idCheck[idIndex]) {
-    idIndex = (idIndex + 1) % 2;
+  let count = 0;
+  while (idCheck[idIndex]) {
+    if (count == 4) break; //means all ids are assigned
+    idIndex = (idIndex + 1) % 4;
+    count++;
   }
+
+  if (count == 4) clients.set(id, Math.floor(Math.random() * 100) + 5); //if all ids are taken, assigns random id from 5 to 100
 
   clients.set(id, idIndex + 1);
   idCheck[idIndex] = true;
-  idIndex = (idIndex + 1) % 2;
+  idIndex = (idIndex + 1) % 4;
 }
