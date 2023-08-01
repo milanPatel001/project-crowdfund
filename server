@@ -1,39 +1,61 @@
 //server
 
-
-//importing module
 //http module to create http server, it's a part of node.js and uses tcp connection
-const http = require('http');
+const http = require("http");
 //socket.io for real time bidirectional communication between server and client, also uses tcp
-const socketIO = require('socket.io');
+const socketIO = require("socket.io");
 
 //creating http server
 const server = http.createServer();
-//initialize socket.io and pasiing http server as argument to socketIO 
-//which gives io instent which can be used to listen for incoming socket connection and events
+
+//initialize socket.io and passing http server as argument to socketIO
+//which gives io instant which can be used to listen for incoming socket connection and events
 const ioserver = socketIO(server);
 
 //Port number that server listens for incoming connection
 const port = 65535;
-let value = 0;
 
-//this function listens to incoming tcp connection and fires a callback function
-ioserver.on('connection', (socket) => {
-  //A welcome massage when new user is connceted
-  console.log('A new client is connected.');
+const values = [0, 0, 0, 0, 0];
+const funds = [
+  "ABC Corp.",
+  "Cancer fund",
+  "Saving Environment Fund",
+  "Scam Fund",
+  "Education Fund",
+];
+
+const clients = new Map();
+let idIndex = 0;
+const idCheck = [false, false];
+
+ioserver.on("connection", (socket) => {
+  assignClientId(socket.id);
+  console.log("Client", clients.get(socket.id), "is connected.");
 
   //this is to handle any communication with the client
   //when a server listens for a event "message" by client it receives the message
   //and emit to all the clients the server is connected to
-  socket.on('new message', (message) => {
-    console.log('Message received:', message);
-    //broadcasting massage to all the clients
-    ioserver.emit('new message', message);
+  socket.on("new message", (message) => {
+    console.log("Message received:", message);
+
+    ioserver.emit("new message", message);
   });
 
-  socket.on("donate", (donation) => {
-    value += donation;
-    ioserver.emit("donation", value);
+  socket.on("donate", (donationData) => {
+    console.log(
+      "Client",
+      clients.get(socket.id),
+      "donated $",
+      donationData.amount,
+      "to",
+      funds[donationData.index]
+    );
+    values[donationData.index] += donationData.amount;
+    //ioserver.emit("donation", value);
+  });
+
+  socket.on("donation amount request", (data) => {
+    socket.emit("donation amount value", { value: values[data.index] });
   });
 
   socket.on("quit", () => {
@@ -42,13 +64,24 @@ ioserver.on('connection', (socket) => {
 
   //Server listens for the disconnect event
   //when disconnects it closes tcp connection
-  socket.on('disconnect', () => {
-    console.log('A client just disconnected.');
+  socket.on("disconnect", () => {
+    console.log("Client", clients.get(socket.id), "just disconnected.");
+    idCheck[clients.get(socket.id) - 1] = false;
+    clients.delete(socket.id);
   });
 });
-
 
 //it starts the server that listen to a spicified port
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+
+function assignClientId(id) {
+  if (idCheck[idIndex]) {
+    idIndex = (idIndex + 1) % 2;
+  }
+
+  clients.set(id, idIndex + 1);
+  idCheck[idIndex] = true;
+  idIndex = (idIndex + 1) % 2;
+}
