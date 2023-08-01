@@ -10,7 +10,15 @@ const rl = readline.createInterface({
 const SERVER_URL = "http://98.113.25.59:65535"; // Replace with the server's IP address and port
 const SERVER_URL_LOCAL = "http://localhost:3000";
 
-const socket = socketIOClient(SERVER_URL_LOCAL);
+const socket = socketIOClient(SERVER_URL);
+
+const funds = [
+  "ABC Corp.",
+  "Cancer fund",
+  "Saving Environment Fund",
+  "Scam Fund",
+  "Education Fund",
+];
 
 function ask(question) {
   return new Promise((resolve, reject) => {
@@ -31,7 +39,7 @@ socket.on("new message", (data) => {
 });
 
 socket.on("donation", (value) => {
-  console.log("\nCurrent total donation amount: ", value, "\n");
+  console.log("\nCurrent total donation amount: $", value, "\n");
 });
 
 socket.on("disconnect", () => {
@@ -39,7 +47,7 @@ socket.on("disconnect", () => {
 });
 
 socket.on("donation amount value", ({ value }) => {
-  console.log("Current amount: ", value);
+  console.log("Current amount: $", value);
 });
 
 let option = "-";
@@ -76,6 +84,8 @@ async function handleDonation() {
   if (Number(option) >= 1 && Number(option) <= 5) {
     let donation = await ask("Enter a donation amount: ");
     donation = Number(donation);
+
+    console.log("\nDonated $", donation, "to", funds[option - 1], ".\n");
 
     socket.emit("donate", { amount: donation, index: Number(option) - 1 });
   }
