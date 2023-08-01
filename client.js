@@ -10,7 +10,7 @@ const rl = readline.createInterface({
 const SERVER_URL = "http://98.113.25.59:65535"; // Replace with the server's IP address and port
 const SERVER_URL_LOCAL = "http://localhost:3000";
 
-const socket = socketIOClient(SERVER_URL);
+const socket = socketIOClient(SERVER_URL_LOCAL);
 
 const funds = [
   "ABC Corp.",
@@ -20,6 +20,7 @@ const funds = [
   "Education Fund",
 ];
 
+// for async user input so that it doesn't block anything
 function ask(question) {
   return new Promise((resolve, reject) => {
     rl.question(question, (input) => resolve(input));
@@ -38,14 +39,32 @@ socket.on("new message", (data) => {
   console.log("Received message from server:", data);
 });
 
-socket.on("donation", (value) => {
-  console.log("\nCurrent total donation amount: $", value, "\n");
+//listens for broadcasted amount info sent by server
+socket.on("donation", async ({ socketId, amount, fundIndex }) => {
+  console.log(
+    "\nBroadcasted by Server: Client",
+    socketId,
+    "donated $",
+    amount,
+    "to",
+    funds[fundIndex]
+  );
+
+  await setTimeout(1000); //for orderly outputs on console
+
+  console.log("\nSelect an option");
+  console.log(
+    "1. Donate\n2. See the Donation amount\nq. Disconnect from the server."
+  );
+
+  console.log("Enter option: ");
 });
 
 socket.on("disconnect", () => {
-  console.log("Connection to server closed");
+  console.log("\nConnection to server closed");
 });
 
+//listens for amount info sent by server
 socket.on("donation amount value", ({ value }) => {
   console.log("Current amount: $", value);
 });
