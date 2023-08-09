@@ -8,19 +8,23 @@ export default function FundPage() {
 
   return (
     <div>
-      <div className="flex flex-col gap-1">
+      <div className="">
         <div className="">
           <p className="">SET HELLO</p>
         </div>
       </div>
       <p>{params.fundId}</p>
 
-      <div className="flex flex-row">
+      <div className="flex flex-row min-h-screen border border-black mx-48">
         {/* Left side of fund page */}
-        <LeftSection />
+        <div className="border border-black w-2/3">
+          <LeftSection />
+        </div>
 
         {/* Right side of fund page */}
-        <RightSection />
+        <div className="border border-black w-1/3">
+          <RightSection />
+        </div>
       </div>
     </div>
   );
