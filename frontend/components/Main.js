@@ -3,12 +3,21 @@
 import { useEffect, useState } from "react";
 import socketIOClient from "socket.io-client";
 import Display from "./Display";
+import Card from "./Card";
 
 export default function Main() {
+  useEffect(() => {}, []);
+
   return (
-    <div>
-      <h1>HELLLO</h1>
-      <Display totalAmount={34} />
+    <div className="flex flex-col border border-pink-600 p-2 items-center bg-gray-200">
+      <div className="grid grid-cols-3 gap-4 items-center border border-green-400 w-2/3 p-2">
+        <Card />
+        <Card />
+        <Card />
+        <Card />
+        <Card />
+        <Card />
+      </div>
     </div>
   );
 }
