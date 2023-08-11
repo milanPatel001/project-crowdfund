@@ -1,6 +1,7 @@
 "use client";
 import LeftSection from "@/components/LeftSection";
 import RightSection from "@/components/RightSection";
+import Navbar from "@/components/Navbar";
 import { useParams } from "next/navigation";
 
 export default function FundPage() {
@@ -8,11 +9,6 @@ export default function FundPage() {
 
   return (
     <div>
-      <div className="">
-        <div className="">
-          <p className="">SET HELLO</p>
-        </div>
-      </div>
       <p>{params.fundId}</p>
 
       <div className="flex flex-row min-h-screen mx-48">
