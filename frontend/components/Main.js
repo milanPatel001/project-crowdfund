@@ -1,22 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import socketIOClient from "socket.io-client";
+
 import Display from "./Display";
 import Card from "./Card";
 
-export default function Main() {
-  useEffect(() => {}, []);
+export default function Main({ socket }) {
+  const [fundsData, setFundsData] = useState(null);
+
+  useEffect(() => {
+    socket?.emit("fundsData request");
+    socket?.on("fundsData response", (fundsData) => {
+      setFundsData(fundsData);
+      console.log(fundsData[0]);
+    });
+  }, [socket]);
 
   return (
-    <div className="flex flex-col border border-pink-600 p-2 items-center bg-gray-200">
-      <div className="grid grid-cols-3 gap-4 items-center border border-green-400 w-2/3 p-2">
-        <Card />
-        <Card />
-        <Card />
-        <Card />
-        <Card />
-        <Card />
+    <div className="flex flex-col p-2 items-center bg-gray-200">
+      <div className="grid grid-cols-3 gap-4 items-center w-2/3 p-2">
+        {fundsData?.map((fund) => (
+          <Card key={fund.id} fund={fund} />
+        ))}
       </div>
     </div>
   );

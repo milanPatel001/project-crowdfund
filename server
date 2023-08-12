@@ -10,27 +10,341 @@ const server = http.createServer();
 
 //initialize socket.io and passing http server as argument to socketIO
 //which gives io instant which can be used to listen for incoming socket connection and events
-const ioserver = socketIO(server);
+const ioserver = socketIO(server, {
+  cors: {
+    origin: "*",
+  },
+});
 
 //Port number that server listens for incoming connection
 const port = 3000;
+const port = 3000;
 
-const values = [0, 0, 0, 0, 0];
-const funds = [
-  "ABC Corp.",
-  "Cancer fund",
-  "Saving Environment Fund",
-  "Scam Fund",
-  "Education Fund",
+const fundsData = [
+  {
+    id: 0,
+    name: "ABC Corp. 1",
+    story:
+      "sadasdasdadsd sdfsfsdf sok oobokof dfsdf ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss",
+    beneficiaryName: "MR. X",
+    place: "BUFFALO, NY",
+    title: "HELP ME SOMEPEOEOEOEOEEE OK boooooe",
+    created_at: "10 Aug 2023",
+    goal: 25000,
+    donation_num: 0,
+    total_donation: 10000,
+    recentDonators: [
+      {
+        donator: "MRS. JAMES",
+        amount: 40,
+      },
+    ],
+    comments: [
+      {
+        donator: "MR. Y",
+        amount: 230,
+        comment: "sdadadadasd",
+      },
+    ],
+  },
+  {
+    id: 1,
+    name: "ABC Corp. 2",
+    story: "---------------------------sadasdasdad",
+    beneficiaryName: "MR. X",
+    place: "BUFFALO, NY",
+    title: "HELP",
+    img: "",
+    created_at: "yesterday",
+    goal: 25000,
+    donation_num: 0,
+    total_donation: 0,
+    recentDonators: [
+      {
+        donator: "MRS. JAMES",
+        amount: 40,
+      },
+    ],
+    comments: [
+      {
+        donator: "MR. Y",
+        amount: 230,
+        comment: "sdadadadasd",
+      },
+    ],
+  },
+  {
+    id: 2,
+    name: "ABC Corp. 3",
+    story: "---------------------------sadasdasdad",
+    beneficiaryName: "MR. X",
+    place: "BUFFALO, NY",
+    title: "HELP",
+    img: "",
+    created_at: "yesterday",
+    goal: 25000,
+    donation_num: 0,
+    total_donation: 0,
+    recentDonators: [
+      {
+        donator: "MRS. JAMES",
+        amount: 40,
+      },
+    ],
+    comments: [
+      {
+        donator: "MR. Y",
+        amount: 230,
+        comment: "sdadadadasd",
+      },
+    ],
+  },
+  {
+    id: 3,
+    name: "ABC Corp. 4",
+    story: "---------------------------sadasdasdad",
+    beneficiaryName: "MR. X",
+    place: "BUFFALO, NY",
+    title: "HELP",
+    img: "",
+    created_at: "yesterday",
+    goal: 25000,
+    donation_num: 0,
+    total_donation: 0,
+    recentDonators: [
+      {
+        donator: "MRS. JAMES",
+        amount: 40,
+      },
+    ],
+    comments: [
+      {
+        donator: "MR. Y",
+        amount: 230,
+        comment: "sdadadadasd",
+      },
+    ],
+  },
+  {
+    id: 4,
+    name: "ABC Corp. 5",
+    story: "---------------------------sadasdasdad",
+    beneficiaryName: "MR. X",
+    place: "BUFFALO, NY",
+    title: "HELP",
+    img: "",
+    created_at: "yesterday",
+    goal: 25000,
+    donation_num: 0,
+    total_donation: 0,
+    recentDonators: [
+      {
+        donator: "MRS. JAMES",
+        amount: 40,
+      },
+    ],
+    comments: [
+      {
+        donator: "MR. Y",
+        amount: 230,
+        comment: "sdadadadasd",
+      },
+    ],
+  },
+  {
+    id: 5,
+    name: "ABC Corp. 6",
+    story: "---------------------------sadasdasdad",
+    beneficiaryName: "MR. X",
+    place: "BUFFALO, NY",
+    title: "HELP",
+    img: "",
+    created_at: "yesterday",
+    goal: 25000,
+    donation_num: 0,
+    total_donation: 0,
+    recentDonators: [
+      {
+        donator: "MRS. JAMES",
+        amount: 40,
+      },
+    ],
+    comments: [
+      {
+        donator: "MR. Y",
+        amount: 230,
+        comment: "sdadadadasd",
+      },
+    ],
+  },
+  {
+    id: 6,
+    name: "ABC Corp. 7",
+    story: "---------------------------sadasdasdad",
+    beneficiaryName: "MR. X",
+    place: "BUFFALO, NY",
+    title: "HELP",
+    img: "",
+    created_at: "yesterday",
+    goal: 25000,
+    donation_num: 0,
+    total_donation: 0,
+    recentDonators: [
+      {
+        donator: "MRS. JAMES",
+        amount: 40,
+      },
+    ],
+    comments: [
+      {
+        donator: "MR. Y",
+        amount: 230,
+        comment: "sdadadadasd",
+      },
+    ],
+  },
+  {
+    id: 7,
+    name: "ABC Corp. 8",
+    story: "---------------------------sadasdasdad",
+    beneficiaryName: "MR. X",
+    place: "BUFFALO, NY",
+    title: "HELP",
+    img: "",
+    created_at: "yesterday",
+    goal: 25000,
+    donation_num: 0,
+    total_donation: 0,
+    recentDonators: [
+      {
+        donator: "MRS. JAMES",
+        amount: 40,
+      },
+    ],
+    comments: [
+      {
+        donator: "MR. Y",
+        amount: 230,
+        comment: "sdadadadasd",
+      },
+    ],
+  },
+  {
+    id: 8,
+    name: "ABC Corp. 9",
+    story: "---------------------------sadasdasdad",
+    beneficiaryName: "MR. X",
+    place: "BUFFALO, NY",
+    title: "HELP",
+    img: "",
+    created_at: "yesterday",
+    goal: 25000,
+    donation_num: 0,
+    total_donation: 0,
+    recentDonators: [
+      {
+        donator: "MRS. JAMES",
+        amount: 40,
+      },
+    ],
+    comments: [
+      {
+        donator: "MR. Y",
+        amount: 230,
+        comment: "sdadadadasd",
+      },
+    ],
+  },
+  {
+    id: 9,
+    name: "ABC Corp. 10",
+    story: "---------------------------sadasdasdad",
+    beneficiaryName: "MR. X",
+    place: "BUFFALO, NY",
+    title: "HELP",
+    img: "",
+    created_at: "yesterday",
+    goal: 25000,
+    donation_num: 0,
+    total_donation: 0,
+    recentDonators: [
+      {
+        donator: "MRS. JAMES",
+        amount: 40,
+      },
+    ],
+    comments: [
+      {
+        donator: "MR. Y",
+        amount: 230,
+        comment: "sdadadadasd",
+      },
+    ],
+  },
+  {
+    id: 10,
+    name: "ABC Corp. 11",
+    story: "---------------------------sadasdasdad",
+    beneficiaryName: "MR. X",
+    place: "BUFFALO, NY",
+    title: "HELP",
+    img: "",
+    created_at: "yesterday",
+    goal: 25000,
+    donation_num: 0,
+    total_donation: 0,
+    recentDonators: [
+      {
+        donator: "MRS. JAMES",
+        amount: 40,
+      },
+    ],
+    comments: [
+      {
+        donator: "MR. Y",
+        amount: 230,
+        comment: "sdadadadasd",
+      },
+    ],
+  },
+  {
+    id: 11,
+    name: "ABC Corp. 12",
+    story: "---------------------------sadasdasdad",
+    beneficiaryName: "MR. X",
+    place: "BUFFALO, NY",
+    title: "HELP",
+    img: "",
+    created_at: "yesterday",
+    goal: 25000,
+    donation_num: 0,
+    total_donation: 0,
+    recentDonators: [
+      {
+        donator: "MRS. JAMES",
+        amount: 40,
+      },
+    ],
+    comments: [
+      {
+        donator: "MR. Y",
+        amount: 230,
+        comment: "sdadadadasd",
+      },
+    ],
+  },
 ];
 
 const clients = new Map();
 let idIndex = 0;
-const idCheck = [false, false, false, false]; //used in checking for free ids (supports only 4 ids for now)
+const idCheck = [false, false];
 
 ioserver.on("connection", (socket) => {
-  assignClientId(socket.id);
-  console.log("Client", clients.get(socket.id), "is connected.");
+  console.log(
+    "Client",
+    socket.request.connection.remoteAddress,
+    "is connected."
+  );
 
   //this is to handle any communication with the client
   //when a server listens for a event "message" by client it receives the message
@@ -41,28 +355,23 @@ ioserver.on("connection", (socket) => {
     ioserver.emit("new message", message);
   });
 
-  //listens for any donations by clients and then stores them
   socket.on("donate", (donationData) => {
     console.log(
       "Client",
-      clients.get(socket.id),
+      socket.request.connection.remoteAddress,
       "donated $",
       donationData.amount,
       "to",
-      funds[donationData.index]
+      fundsData[donationData.index].beneficiaryName
     );
     values[donationData.index] += donationData.amount;
-
-    //broadcasts to every client
-    ioserver.emit("donation", {
-      socketId: clients.get(socket.id),
-      amount: donationData.amount,
-      fundIndex: donationData.index,
-    });
+    //ioserver.emit("donation", value);
   });
 
   socket.on("donation amount request", (data) => {
-    socket.emit("donation amount value", { value: values[data.index] });
+    socket.emit("donation amount value", {
+      value: fundsData[data.index].total_donation,
+    });
   });
 
   socket.on("quit", () => {
@@ -72,9 +381,11 @@ ioserver.on("connection", (socket) => {
   //Server listens for the disconnect event
   //when disconnects it closes tcp connection
   socket.on("disconnect", () => {
-    console.log("Client", clients.get(socket.id), "just disconnected.");
-    idCheck[clients.get(socket.id) - 1] = false;
-    clients.delete(socket.id);
+    console.log(
+      "Client",
+      socket.request.connection.remoteAddress,
+      "just disconnected."
+    );
   });
 });
 
@@ -84,16 +395,11 @@ server.listen(port, () => {
 });
 
 function assignClientId(id) {
-  let count = 0;
-  while (idCheck[idIndex]) {
-    if (count == 4) break; //means all ids are assigned
-    idIndex = (idIndex + 1) % 4;
-    count++;
+  if (idCheck[idIndex]) {
+    idIndex = (idIndex + 1) % 2;
   }
-
-  if (count == 4) clients.set(id, Math.floor(Math.random() * 100) + 5); //if all ids are taken, assigns random id from 5 to 100
 
   clients.set(id, idIndex + 1);
   idCheck[idIndex] = true;
-  idIndex = (idIndex + 1) % 4;
+  idIndex = (idIndex + 1) % 2;
 }
