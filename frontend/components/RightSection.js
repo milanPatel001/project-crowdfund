@@ -3,9 +3,12 @@ import { UserCircleIcon } from "@heroicons/react/24/outline";
 import DonationSection from "./DonationSection";
 import { useParams, useRouter } from "next/navigation";
 
-
-
-export default function RightSection({openisleaderBoard, closeisleaderBoard}) {
+export default function RightSection({
+  openisleaderBoard,
+  closeisleaderBoard,
+  openSeeAllModal,
+  closeSeeAllModal,
+}) {
   const router = useRouter();
   const params = useParams();
 
@@ -68,10 +71,16 @@ export default function RightSection({openisleaderBoard, closeisleaderBoard}) {
 
       {/* Bottom buttons */}
       <div className="flex flex-row w-full mt-3 px-1">
-        <button className="text-red-600 border border-red-500 font-semibold rounded-xl px-3 py-2 hover:bg-red-200">
+        <button
+          className="text-red-600 border border-red-500 font-semibold rounded-xl px-3 py-2 hover:bg-red-200"
+          onClick={() => openSeeAllModal()}
+        >
           See all
         </button>
-        <button onClick={()=>openisleaderBoard()} className="border border-green-500 text-green-700 font-semibold rounded-xl px-3 py-2 ml-3 hover:bg-green-100">
+        <button
+          onClick={() => openisleaderBoard()}
+          className="border border-green-500 text-green-700 font-semibold rounded-xl px-3 py-2 ml-3 hover:bg-green-100"
+        >
           $ See Top Donations $
         </button>
       </div>
