@@ -13,16 +13,18 @@ export default function LeftSection() {
   ]);
 
   return (
-    <div>
-      <h1>{title}</h1>
-      <img src={imageUrl} alt="Crowdfunding Campaign" />
-      <p>{story}</p>
+    <div className="bg-white rounded-lg shadow-lg p-6">
+      <h1 className="text-2xl font-semibold mb-4">{title}</h1>
+      <img src={imageUrl} alt="Crowdfunding Campaign" className="mb-4" />
+      <p className="text-gray-700 mb-6">{story}</p>
 
       <div>
-        <h2>Comments</h2>
+        <h2 className="text-xl font-semibold mb-4">Comments</h2>
         {comments.map((comment) => (
-          <div key={comment.id}>
-            <p><strong>{comment.user}:</strong> {comment.text}</p>
+          <div key={comment.id} className="mb-2">
+            <p className="text-gray-900">
+              <strong>{comment.user}:</strong> {comment.text}
+            </p>
           </div>
         ))}
       </div>
