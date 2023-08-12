@@ -18,7 +18,6 @@ const ioserver = socketIO(server, {
 
 //Port number that server listens for incoming connection
 const port = 3000;
-const port = 3000;
 
 const fundsData = [
   {
@@ -335,9 +334,17 @@ const fundsData = [
   },
 ];
 
-const clients = new Map();
-let idIndex = 0;
-const idCheck = [false, false];
+//Stores top donations (use a priority queue)
+const fundsLeaderboard = [
+  {
+    donator: "Mr. Z",
+    amount: 240,
+  },
+  {
+    donator: "Mr. A",
+    amount: 56,
+  },
+];
 
 ioserver.on("connection", (socket) => {
   console.log(
@@ -346,15 +353,7 @@ ioserver.on("connection", (socket) => {
     "is connected."
   );
 
-  //this is to handle any communication with the client
-  //when a server listens for a event "message" by client it receives the message
-  //and emit to all the clients the server is connected to
-  socket.on("new message", (message) => {
-    console.log("Message received:", message);
-
-    ioserver.emit("new message", message);
-  });
-
+  //listens for any donations by clients and then stores them
   socket.on("donate", (donationData) => {
     console.log(
       "Client",
@@ -364,8 +363,26 @@ ioserver.on("connection", (socket) => {
       "to",
       fundsData[donationData.index].beneficiaryName
     );
-    values[donationData.index] += donationData.amount;
-    //ioserver.emit("donation", value);
+
+    //adding to total amount
+    fundsData[donationData.index].total_donation += donationData.amount;
+
+    //pushing to recent donations and top donations arr
+    fundsData[donationData.index].recentDonators.unshift({
+      donator: donationData.donator,
+      amount: donationData.amount,
+    });
+
+    //broadcasts to every client
+    ioserver.emit("donation", {
+      socketId: socket.request.connection.remoteAddress,
+      amount: donationData.amount,
+      fundIndex: donationData.index,
+    });
+  });
+
+  socket.on("fundsData request", () => {
+    socket.emit("fundsData response", fundsData);
   });
 
   socket.on("donation amount request", (data) => {
@@ -393,13 +410,3 @@ ioserver.on("connection", (socket) => {
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
-
-function assignClientId(id) {
-  if (idCheck[idIndex]) {
-    idIndex = (idIndex + 1) % 2;
-  }
-
-  clients.set(id, idIndex + 1);
-  idCheck[idIndex] = true;
-  idIndex = (idIndex + 1) % 2;
-}
