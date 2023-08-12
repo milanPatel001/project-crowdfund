@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
+import DonationSection from "./DonationSection";
+import { useParams, useRouter } from "next/navigation";
 
 export default function RightSection() {
+  const router = useRouter();
+  const params = useParams();
+
   return (
     <div className="flex flex-col gap-2 m-4 shadow-xl border border-t-1 border-gray-300 rounded-2xl p-4">
       <div>
@@ -15,9 +20,13 @@ export default function RightSection() {
         </div>
       </div>
       <p className=" text-sm text-gray-400 mb-2">1K donations</p>
-      <button className="py-3 mx-6 bg-yellow-400 rounded-xl font-semibold hover:bg-yellow-300">
+      <button
+        className="py-3 mx-6 bg-yellow-400 rounded-xl font-semibold hover:bg-yellow-300"
+        onClick={() => router.push(`/${params.fundId}/donation`)}
+      >
         Donate Now
       </button>
+
       <button className="py-3 mx-6 bg-yellow-400 rounded-xl font-semibold hover:bg-yellow-300">
         Share
       </button>

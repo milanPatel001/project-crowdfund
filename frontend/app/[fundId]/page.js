@@ -1,8 +1,9 @@
 "use client";
 import LeftSection from "@/components/LeftSection";
 import RightSection from "@/components/RightSection";
-import Navbar from "@/components/Navbar";
 import { useParams } from "next/navigation";
+import DonationSection from "@/components/DonationSection";
+import { useState } from "react";
 
 export default function FundPage() {
   const params = useParams();
@@ -11,7 +12,7 @@ export default function FundPage() {
     <div>
       <p>{params.fundId}</p>
 
-      <div className="flex flex-row min-h-screen mx-48">
+      <div className="flex flex-row min-h-screen mx-48 relative">
         {/* Left side of fund page */}
         <div className="border border-black w-2/3">
           <LeftSection />

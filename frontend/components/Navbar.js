@@ -8,7 +8,7 @@ export default function Navbar() {
   const router = useRouter();
 
   return (
-    <div className="bg-black p-4 sticky top-0 shadow-2xl">
+    <div className="bg-black p-4 sticky top-0 shadow-2xl z-50">
       <div className="flex items-center">
         <h1 className="text-white ml-4 font-bold text-4xl cursor-default select-none w-2/5">
           FundX
