@@ -58,10 +58,15 @@ export default function RightSection({
       <div className="flex flex-col gap-5">
         {fundData?.recentDonators?.slice(0, 4).map((p) => (
           <div key={p.amount} className="flex flex-row gap-2">
-            <UserCircleIcon className="h-12 w-10 text-gray-400" />
+            <img
+              width={40}
+              height={40}
+              src={"https://api.dicebear.com/6.x/bottts/svg?seed=" + p.donator}
+              alt="avt"
+            />
             <div className="flex flex-col">
               <p className="text-gray-700 font-mono font-light">{p.donator}</p>
-              <p className="ml-0.5 text-sm font-semibold">${p.amount}</p>
+              <p className="text-sm font-semibold">${p.amount}</p>
             </div>
           </div>
         ))}

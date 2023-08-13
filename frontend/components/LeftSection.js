@@ -7,11 +7,6 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function LeftSection({ fundData }) {
-  const title = "CrowdFunding";
-
-  const story =
-    "The Trust and Safety team inside CrowdFunding works with key stakeholders, including government officials, to ensure that funds raised on the platform are verified and that they go to the cause for which the money is being raised.";
-
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mt-3">
       <h1 className="text-3xl font-semibold mb-4">{fundData.title}</h1>
@@ -24,7 +19,13 @@ export default function LeftSection({ fundData }) {
       />
 
       <div className="flex gap-2 items-center">
-        <UserCircleIcon className="w-7 h-7 text-gray-500" />
+        <img
+          width={40}
+          height={40}
+          src={"https://api.dicebear.com/6.x/bottts/svg?seed=" + fundData.name}
+          alt="avt"
+          loading="lazy"
+        />
         <p className="text-xl font-serif">
           {fundData.name} is organizaing this fundraise
         </p>
@@ -49,7 +50,15 @@ export default function LeftSection({ fundData }) {
 
       <div className="flex gap-24">
         <div className="flex items-start gap-2">
-          <UserCircleIcon className="w-10 h-10" />
+          <img
+            width={40}
+            height={40}
+            src={
+              "https://api.dicebear.com/6.x/bottts/svg?seed=" + fundData.name
+            }
+            alt="avt"
+            loading="lazy"
+          />
           <div className="flex flex-col">
             <p className="font-semibold">{fundData.name}</p>
             <p className="font-light text-sm">Organzier</p>
@@ -58,7 +67,16 @@ export default function LeftSection({ fundData }) {
         </div>
 
         <div className="flex items-start gap-2">
-          <UserCircleIcon className="w-10 h-10" />
+          <img
+            width={40}
+            height={40}
+            src={
+              "https://api.dicebear.com/6.x/bottts/svg?seed=" +
+              fundData.beneficiaryName
+            }
+            alt="avt"
+            loading="lazy"
+          />
           <div className="flex flex-col">
             <p className="font-semibold">{fundData.beneficiaryName}</p>
             <p className="font-light text-sm">Beneficiary</p>

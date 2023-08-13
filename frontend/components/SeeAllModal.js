@@ -27,13 +27,20 @@ export default function SeeAllModal({ isOpen, onClose, fundData }) {
 
         <div className="p-4 overflow-auto flex flex-col gap-3">
           {fundData?.recentDonators.map((d) => (
-            <div className="flex flex-row gap-2">
-              <UserCircleIcon className="h-14 w-12 text-gray-700" />
+            <div className="flex flex-row gap-4 items-center">
+              <img
+                width={70}
+                height={70}
+                src={
+                  "https://api.dicebear.com/6.x/pixel-art/svg?seed=" + d.donator
+                }
+                alt="avt"
+              />
               <div className="flex flex-col">
-                <p className="text-gray-700 font-mono font-light text-xl">
+                <p className="text-gray-700 font-mono font-light text-xl ml-0.5">
                   {d.donator}
                 </p>
-                <p className="ml-0.5 font-semibold text-base">${d.amount}</p>
+                <p className="font-semibold text-base">${d.amount}</p>
               </div>
             </div>
           ))}
