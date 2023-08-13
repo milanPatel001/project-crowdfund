@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { CurrencyDollarIcon, UserIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSocket } from "./SocketProvider";
+import { useParams, useRouter } from "next/navigation";
 
 export default function DonationSection() {
   const [donationInput, setDonationInput] = useState("5");
@@ -8,6 +10,10 @@ export default function DonationSection() {
   const [tipAmount, setTipAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(5);
   const [name, setName] = useState("Anonymous");
+
+  const socket = useSocket();
+  const params = useParams();
+  const router = useRouter();
 
   const handleTipChange = (percent) => {
     const amt = (Number(donationInput) * percent) / 100;
@@ -45,6 +51,22 @@ export default function DonationSection() {
         );
       }
     }
+  };
+
+  const handleDonationClick = () => {
+    const data = {
+      index: params.fundId,
+      amount: totalAmount,
+      donator: name,
+    };
+
+    console.log(totalAmount);
+    console.log(name);
+    console.log(data.index);
+
+    socket.emit("donate", data);
+
+    router.push(`/${params.fundId}`);
   };
 
   return (
@@ -157,7 +179,10 @@ export default function DonationSection() {
         ></input>
       </div>
 
-      <button className="mt-10 p-3 bg-yellow-400 rounded-xl font-bold w-1/2 mx-auto hover:bg-yellow-300">
+      <button
+        className="mt-10 p-3 bg-yellow-400 rounded-xl font-bold w-1/2 mx-auto hover:bg-yellow-300"
+        onClick={() => handleDonationClick()}
+      >
         Donate
       </button>
     </div>

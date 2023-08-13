@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
-import DonationSection from "./DonationSection";
 import { useParams, useRouter } from "next/navigation";
 
 export default function RightSection({
@@ -8,23 +7,36 @@ export default function RightSection({
   closeisleaderBoard,
   openSeeAllModal,
   closeSeeAllModal,
+  fundData,
 }) {
   const router = useRouter();
   const params = useParams();
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let percent = (fundData.total_donation * 100) / fundData.goal;
+    if (percent > 100) percent = 100;
+    setProgress(percent);
+  }, [fundData.total_donation]);
 
   return (
     <div className="flex flex-col gap-2 m-4 shadow-xl border border-t-1 border-gray-300 rounded-2xl p-4">
       <div>
-        <span className="font-serif text-3xl">$110,941 </span>
+        <span className="font-serif text-3xl">${fundData.total_donation} </span>
         <span className="text-gray-500 font-serif">
-          raised of $100,000 goal
+          raised of ${fundData.goal} goal
         </span>
 
         <div className="w-full bg-gray-200 rounded-full h-1.5 my-2 dark:bg-gray-700">
-          <div className="bg-green-600 h-1.5 rounded-full w-1/2"></div>
+          <div
+            className="bg-green-600 h-1.5 rounded-full"
+            style={{ width: progress + "%" }}
+          />
         </div>
       </div>
-      <p className=" text-sm text-gray-400 mb-2">1K donations</p>
+      <p className=" text-sm text-gray-400 mb-2">
+        {fundData.donation_num} donations
+      </p>
       <button
         className="py-3 mx-6 bg-yellow-400 rounded-xl font-semibold hover:bg-yellow-300"
         onClick={() => router.push(`/${params.fundId}/donation`)}
@@ -44,29 +56,15 @@ export default function RightSection({
 
       {/* Recent Donations - max 3 on display*/}
       <div className="flex flex-col gap-5">
-        <div className="flex flex-row gap-2">
-          <UserCircleIcon className="h-12 w-10 text-gray-400" />
-          <div className="flex flex-col">
-            <p className="text-gray-700 font-serif font-light">James White</p>
-            <p className="ml-0.5 text-sm font-semibold">$200</p>
+        {fundData?.recentDonators?.slice(0, 4).map((p) => (
+          <div key={p} className="flex flex-row gap-2">
+            <UserCircleIcon className="h-12 w-10 text-gray-400" />
+            <div className="flex flex-col">
+              <p className="text-gray-700 font-mono font-light">{p.donator}</p>
+              <p className="ml-0.5 text-sm font-semibold">${p.amount}</p>
+            </div>
           </div>
-        </div>
-
-        <div className="flex flex-row gap-2">
-          <UserCircleIcon className="h-12 w-10 text-gray-400" />
-          <div className="flex flex-col">
-            <p className="text-gray-700 font-mono font-light">James White</p>
-            <p className="ml-0.5 text-sm font-semibold">$200</p>
-          </div>
-        </div>
-
-        <div className="flex flex-row gap-2">
-          <UserCircleIcon className="h-12 w-10 text-gray-400" />
-          <div className="flex flex-col">
-            <p className="text-gray-700 font-mono font-light">James White</p>
-            <p className="ml-0.5 text-sm font-semibold">$200</p>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Bottom buttons */}

@@ -1,6 +1,6 @@
 import { UserCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
-export default function SeeAllModal({ isOpen, onClose }) {
+export default function SeeAllModal({ isOpen, onClose, fundData }) {
   if (!isOpen) return null;
 
   return (
@@ -26,14 +26,14 @@ export default function SeeAllModal({ isOpen, onClose }) {
         </div>
 
         <div className="p-4 overflow-auto flex flex-col gap-3">
-          {Array.from({ length: 11 }, (_, index) => (
+          {fundData?.recentDonators.map((d) => (
             <div className="flex flex-row gap-2">
               <UserCircleIcon className="h-14 w-12 text-gray-700" />
               <div className="flex flex-col">
                 <p className="text-gray-700 font-mono font-light text-xl">
-                  James White
+                  {d.donator}
                 </p>
-                <p className="ml-0.5 font-semibold text-base">$200</p>
+                <p className="ml-0.5 font-semibold text-base">${d.amount}</p>
               </div>
             </div>
           ))}

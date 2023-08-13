@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useSocket } from "./SocketProvider";
 
 export default function Card({ fund }) {
   const router = useRouter();

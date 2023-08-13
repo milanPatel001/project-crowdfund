@@ -367,6 +367,9 @@ ioserver.on("connection", (socket) => {
     //adding to total amount
     fundsData[donationData.index].total_donation += donationData.amount;
 
+    //adding to donations count
+    fundsData[donationData.index].donation_num += 1;
+
     //pushing to recent donations and top donations arr
     fundsData[donationData.index].recentDonators.unshift({
       donator: donationData.donator,
@@ -375,14 +378,24 @@ ioserver.on("connection", (socket) => {
 
     //broadcasts to every client
     ioserver.emit("donation", {
-      socketId: socket.request.connection.remoteAddress,
+      socketId: socket.id,
+
       amount: donationData.amount,
-      fundIndex: donationData.index,
+      fund: fundsData[donationData.index].title,
+      donator: donationData.donator,
+      index: donationData.index,
+      fundsData: fundsData,
     });
   });
 
+  // client asks for this data before it loads the website
   socket.on("fundsData request", () => {
     socket.emit("fundsData response", fundsData);
+  });
+
+  // client asks for this data before it loads the website
+  socket.on("specific fund request", (index) => {
+    socket.emit("specific fund response", fundsData[index]);
   });
 
   socket.on("donation amount request", (data) => {
