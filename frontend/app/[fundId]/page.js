@@ -14,6 +14,9 @@ export default function FundPage() {
   const params = useParams();
   const socket = useSocket();
 
+  const toast_id1 = "success2";
+  const toast_id2 = "info1";
+
   const [isSeeAllModalOpen, setIsSeeAllModalOpen] = useState(false);
   const [isleaderBoardOpen, setisleaderBoardOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -51,23 +54,25 @@ export default function FundPage() {
     });
 
     socket?.on("donation", (data) => {
-      console.log(socket.id);
-      console.log(data.socketId);
-
       if (socket) {
         if (socket?.id !== data.socketId) {
-          toast.info("Wow so easy!!", {
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
-          });
+          toast.info(
+            `${data.donator} contributed ${data.amount} to ${data.fundOrganizer}`,
+            {
+              toastId: toast_id2,
+              position: "top-right",
+              autoClose: 5000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+              theme: "light",
+            }
+          );
         } else {
           toast.success("Donated Successfully", {
+            toastId: toast_id1,
             position: "top-right",
             autoClose: 3000,
             hideProgressBar: false,
@@ -78,6 +83,8 @@ export default function FundPage() {
             theme: "light",
           });
         }
+
+        toast.clearWaitingQueue();
       }
 
       setFundData(data.fundsData[params.fundId]);

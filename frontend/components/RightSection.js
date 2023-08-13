@@ -77,14 +77,14 @@ export default function RightSection({
       {/* Bottom buttons */}
       <div className="flex flex-row w-full mt-3 px-1">
         <button
-          className="text-red-600 border border-red-500 font-semibold rounded-xl px-3 py-2 hover:bg-red-200"
+          className="text-white bg-red-500 font-semibold rounded-xl px-3 py-2 hover:bg-red-600"
           onClick={() => openSeeAllModal()}
         >
           See all
         </button>
         <button
           onClick={() => openisleaderBoard()}
-          className="border border-green-500 text-green-700 font-semibold rounded-xl px-3 py-2 ml-3 hover:bg-green-100"
+          className="bg-green-700 text-white font-semibold rounded-xl px-3 py-2 ml-3 hover:bg-green-600"
         >
           $ See Top Donations $
         </button>

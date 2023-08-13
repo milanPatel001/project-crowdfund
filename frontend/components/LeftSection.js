@@ -9,7 +9,9 @@ import {
 export default function LeftSection({ fundData }) {
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mt-3">
-      <h1 className="text-3xl font-semibold mb-4">{fundData.title}</h1>
+      <h1 className="text-3xl font-semibold mb-4 break-all">
+        {fundData.title}
+      </h1>
       <Image
         src={"/crowdfunding.jpg"}
         alt="Crowdfunding Campaign"
@@ -42,9 +44,7 @@ export default function LeftSection({ fundData }) {
 
       <div className="border border-gray-200 mt-5 "></div>
 
-      <p className="text-gray-700 my-6 mb-8 overflow-hidden">
-        {fundData.story}
-      </p>
+      <p className="text-gray-700 my-6 mb-8 break-all">{fundData.story}</p>
 
       <p className="font-semibold mb-5 text-2xl">Organizer</p>
 
@@ -95,12 +95,12 @@ export default function LeftSection({ fundData }) {
       <div className="mt-5 flex flex-col gap-2">
         {fundData?.comments?.map((c) => (
           <>
-            <div key={c} className="mb-2 flex gap-3">
+            <div key={c} className="mb-2 flex gap-3 p-2">
               <HeartIcon className="w-8 h-8 text-red-500" />
               <div className="flex flex-col">
                 <p className="font-semibold">{c.donator}</p>
                 <p className="text-sm text-gray-600">${c.amount}</p>
-                <p className="mt-1">{c.comment}</p>
+                <p className="mt-1 break-all">{c.comment}</p>
               </div>
             </div>
             <div className="border border-gray-100 mx-2 mb-2"></div>

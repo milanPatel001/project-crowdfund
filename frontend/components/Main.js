@@ -7,6 +7,7 @@ import Card from "./Card";
 
 export default function Main({ socket }) {
   const [fundsData, setFundsData] = useState([]);
+  const toast_id = "success1";
 
   useEffect(() => {
     socket?.emit("fundsData request");
@@ -16,17 +17,23 @@ export default function Main({ socket }) {
 
     socket?.on("donation", (data) => {
       if (socket?.id !== data.socketId) {
-        toast.info("Wow so easy!!", {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-        });
+        toast.info(
+          `${data.donator} contributed $ ${data.amount} to ${data.fundOrganizer}`,
+          {
+            toastId: toast_id,
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+          }
+        );
       }
+
+      toast.clearWaitingQueue();
       setFundsData(data.fundsData);
     });
   }, [socket]);

@@ -385,7 +385,7 @@ ioserver.on("connection", (socket) => {
       socketId: socket.id,
 
       amount: donationData.amount,
-      fund: fundsData[donationData.index].title,
+      fundOrganizer: fundsData[donationData.index].name,
       donator: donationData.donator,
       index: donationData.index,
       fundsData: fundsData,

@@ -3,12 +3,17 @@ import { CurrencyDollarIcon, UserIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import { useSocket } from "./SocketProvider";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function DonationSection() {
-  const [donationInput, setDonationInput] = useState("5");
   const [tipButton, setTipButton] = useState(0);
   const [tipAmount, setTipAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(5);
+
+  const toast_id = "warning1";
+
+  const [donationInput, setDonationInput] = useState("5");
   const [name, setName] = useState("Anonymous");
   const [comment, setComment] = useState("");
   const [fundData, setFundData] = useState({});
@@ -34,10 +39,11 @@ export default function DonationSection() {
 
   const handleActiveTip = (percent) => {
     let tipCss =
-      "rounded-xl px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-500 hover:bg-green-300 hover:text-blue-700";
+      "rounded-xl px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-500 hover:bg-green-300 hover:text-blue-700 ";
 
     if (tipButton === percent) {
-      tipCss += " active: bg-green-400 active: text-blue-800";
+      tipCss =
+        "rounded-xl px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-500 hover:bg-green-300 hover:text-blue-700  active:bg-green-400 active:text-blue-800";
     }
 
     return tipCss;
@@ -63,27 +69,38 @@ export default function DonationSection() {
   };
 
   const handleDonationClick = () => {
-    const commentObj = {
-      donator: name,
-      amount: totalAmount,
-      comment: comment,
-    };
+    if (Number(donationInput) <= 5) {
+      toast.error("Donation amount must be at least $5.00", {
+        toastId: toast_id,
+        position: "top-center",
+        autoClose: 4000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
 
-    const data = {
-      index: params.fundId,
-      amount: totalAmount,
-      donator: name,
-      comment: commentObj,
-    };
+      toast.clearWaitingQueue();
+    } else {
+      const commentObj = {
+        donator: name,
+        amount: totalAmount,
+        comment: comment,
+      };
 
-    console.log(totalAmount);
-    console.log(name);
-    console.log(data.index);
-    console.log(comment);
+      const data = {
+        index: params.fundId,
+        amount: totalAmount,
+        donator: name,
+        comment: commentObj,
+      };
 
-    socket.emit("donate", data);
+      socket.emit("donate", data);
 
-    router.push(`/${params.fundId}`);
+      router.push(`/${params.fundId}`);
+    }
   };
 
   return (
