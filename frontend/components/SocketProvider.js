@@ -10,8 +10,7 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const url = process.env.SERVER_URL || SERVER_URL_LOCAL;
-    const s = socketIOClient(url);
+    const s = socketIOClient(SERVER_URL);
     setSocket(s);
 
     return () => {
