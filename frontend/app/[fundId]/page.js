@@ -8,6 +8,7 @@ import LeaderBoard from "@/components/LeaderBoard";
 import { useSocket } from "@/components/SocketProvider";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ShareModal from "@/components/ShareModal";
 
 export default function FundPage() {
   const params = useParams();
@@ -15,6 +16,7 @@ export default function FundPage() {
 
   const [isSeeAllModalOpen, setIsSeeAllModalOpen] = useState(false);
   const [isleaderBoardOpen, setisleaderBoardOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [fundData, setFundData] = useState({});
 
   const openSeeAllModal = () => {
@@ -23,6 +25,14 @@ export default function FundPage() {
 
   const closeSeeAllModal = () => {
     setIsSeeAllModalOpen(false);
+  };
+
+  const openShareModal = () => {
+    setIsShareModalOpen(true);
+  };
+
+  const closeShareModal = () => {
+    setIsShareModalOpen(false);
   };
 
   const openisleaderBoard = () => {
@@ -83,6 +93,9 @@ export default function FundPage() {
           fundData={fundData}
         />
         <LeaderBoard isOpen={isleaderBoardOpen} onClose={closeisleaderBoard} />
+
+        <ShareModal isOpen={isShareModalOpen} onClose={closeShareModal} />
+
         {/* Left side of fund page */}
         <div className="lg:w-3/5 xl:w-2/3">
           <LeftSection fundData={fundData} />
@@ -93,9 +106,8 @@ export default function FundPage() {
           <RightSection
             fundData={fundData}
             openSeeAllModal={openSeeAllModal}
-            closeSeeAllModal={closeSeeAllModal}
             openisleaderBoard={openisleaderBoard}
-            closeisleaderBoard={closeisleaderBoard}
+            openShareModal={openShareModal}
           />
         </div>
       </div>

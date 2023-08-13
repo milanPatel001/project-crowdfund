@@ -4,9 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 
 export default function RightSection({
   openisleaderBoard,
-  closeisleaderBoard,
   openSeeAllModal,
-  closeSeeAllModal,
+  openShareModal,
   fundData,
 }) {
   const router = useRouter();
@@ -44,7 +43,10 @@ export default function RightSection({
         Donate Now
       </button>
 
-      <button className="py-3 mx-6 bg-yellow-400 rounded-xl font-semibold hover:bg-yellow-300">
+      <button
+        className="py-3 mx-6 bg-yellow-400 rounded-xl font-semibold hover:bg-yellow-300"
+        onClick={() => openShareModal()}
+      >
         Share
       </button>
 
