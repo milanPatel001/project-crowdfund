@@ -376,6 +376,10 @@ ioserver.on("connection", (socket) => {
       amount: donationData.amount,
     });
 
+    if (donationData.comment.comment) {
+      fundsData[donationData.index].comments.unshift(donationData.comment);
+    }
+
     //broadcasts to every client
     ioserver.emit("donation", {
       socketId: socket.id,

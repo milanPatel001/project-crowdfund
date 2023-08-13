@@ -76,7 +76,7 @@ export default function FundPage() {
 
   return (
     <div>
-      <div className="flex flex-row min-h-screen mx-48 relative">
+      <div className="lg:flex lg:flex-row min-h-screen relative lg:mx-12 xl:mx-48">
         <SeeAllModal
           isOpen={isSeeAllModalOpen}
           onClose={closeSeeAllModal}
@@ -84,12 +84,12 @@ export default function FundPage() {
         />
         <LeaderBoard isOpen={isleaderBoardOpen} onClose={closeisleaderBoard} />
         {/* Left side of fund page */}
-        <div className="border border-black w-2/3">
+        <div className="lg:w-3/5 xl:w-2/3">
           <LeftSection fundData={fundData} />
         </div>
 
         {/* Right side of fund page */}
-        <div className="w-1/3">
+        <div className="lg:w-2/5 xl:w-1/3 xl:ml-5">
           <RightSection
             fundData={fundData}
             openSeeAllModal={openSeeAllModal}

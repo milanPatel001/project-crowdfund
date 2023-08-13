@@ -12,7 +12,7 @@ export default function SeeAllModal({ isOpen, onClose, fundData }) {
       ></div>
 
       {/* Modal content */}
-      <div className="bg-white rounded-xl z-10 flex flex-col h-2/3 w-1/4">
+      <div className="bg-white rounded-xl z-10 flex flex-col h-2/3 lg:w-1/4">
         {/* Your modal content */}
 
         <div className="flex items-center w-full sticky top-0 bg-white rounded-xl shadow-lg p-4">

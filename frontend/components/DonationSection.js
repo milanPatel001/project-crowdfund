@@ -10,10 +10,19 @@ export default function DonationSection() {
   const [tipAmount, setTipAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(5);
   const [name, setName] = useState("Anonymous");
+  const [comment, setComment] = useState("");
+  const [fundData, setFundData] = useState({});
 
   const socket = useSocket();
   const params = useParams();
   const router = useRouter();
+
+  useEffect(() => {
+    socket?.emit("specific fund request", params.fundId);
+    socket?.on("specific fund response", (fund) => {
+      setFundData(fund);
+    });
+  }, [socket]);
 
   const handleTipChange = (percent) => {
     const amt = (Number(donationInput) * percent) / 100;
@@ -54,15 +63,23 @@ export default function DonationSection() {
   };
 
   const handleDonationClick = () => {
+    const commentObj = {
+      donator: name,
+      amount: totalAmount,
+      comment: comment,
+    };
+
     const data = {
       index: params.fundId,
       amount: totalAmount,
       donator: name,
+      comment: commentObj,
     };
 
     console.log(totalAmount);
     console.log(name);
     console.log(data.index);
+    console.log(comment);
 
     socket.emit("donate", data);
 
@@ -78,10 +95,13 @@ export default function DonationSection() {
         <div className="flex flex-col ml-4">
           <p>
             You're supporting{" "}
-            <span className=" font-bold"> HELPP ASYA ALIE </span>{" "}
+            <span className=" font-bold"> {fundData.title} </span>{" "}
           </p>
-          <p className=" text-gray-400 font-light">
-            Your donation will benefit <span className="font-bold">ALICE</span>
+          <p className=" text-gray-400 font-normal">
+            Your donation will benefit{" "}
+            <span className="font-bold text-gray-600">
+              {fundData.beneficiaryName}
+            </span>
           </p>
         </div>
       </div>
@@ -178,6 +198,21 @@ export default function DonationSection() {
           onChange={(e) => setName(e.currentTarget.value)}
         ></input>
       </div>
+
+      <label
+        htmlFor="message"
+        className="block mt-5 mb-2 ml-0.5 text-sm font-medium text-gray-900 dark:text-white"
+      >
+        Show some words of support
+      </label>
+      <textarea
+        id="message"
+        rows="4"
+        className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none"
+        placeholder="Write your thoughts here..."
+        value={comment}
+        onChange={(e) => setComment(e.currentTarget.value)}
+      ></textarea>
 
       <button
         className="mt-10 p-3 bg-yellow-400 rounded-xl font-bold w-1/2 mx-auto hover:bg-yellow-300"

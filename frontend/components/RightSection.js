@@ -20,14 +20,14 @@ export default function RightSection({
   }, [fundData.total_donation]);
 
   return (
-    <div className="flex flex-col gap-2 m-4 shadow-xl border border-t-1 border-gray-300 rounded-2xl p-4">
+    <div className="flex flex-col gap-2 m-4 mt-16 shadow-xl border border-t-1 border-gray-300 rounded-2xl p-4 sticky top-24">
       <div>
         <span className="font-serif text-3xl">${fundData.total_donation} </span>
         <span className="text-gray-500 font-serif">
           raised of ${fundData.goal} goal
         </span>
 
-        <div className="w-full bg-gray-200 rounded-full h-1.5 my-2 dark:bg-gray-700">
+        <div className="w-full bg-gray-200 rounded-full h-1.5 my-2">
           <div
             className="bg-green-600 h-1.5 rounded-full"
             style={{ width: progress + "%" }}
@@ -50,14 +50,14 @@ export default function RightSection({
 
       <div className="border border-gray-200 mt-4 "></div>
 
-      <p className="text-xl mt-1 mb-1 font-serif font-thin text-gray-500 underline underline-offset-4">
+      <p className="text-xl mt-1 mb-1 font-light text-gray-500 underline underline-offset-4">
         Recent Donations
       </p>
 
       {/* Recent Donations - max 3 on display*/}
       <div className="flex flex-col gap-5">
         {fundData?.recentDonators?.slice(0, 4).map((p) => (
-          <div key={p} className="flex flex-row gap-2">
+          <div key={p.amount} className="flex flex-row gap-2">
             <UserCircleIcon className="h-12 w-10 text-gray-400" />
             <div className="flex flex-col">
               <p className="text-gray-700 font-mono font-light">{p.donator}</p>
