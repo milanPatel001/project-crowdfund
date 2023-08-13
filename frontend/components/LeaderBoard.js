@@ -28,8 +28,8 @@ export default function LeaderBoard({ isOpen, onClose, fundData }) {
         </div>
 
         <div className="p-4 overflow-auto flex flex-col gap-3">
-          {fundData?.leaderboard.map((d) => (
-            <div className="flex flex-row gap-4 items-center">
+          {fundData?.leaderboard.map((d, index) => (
+            <div className="flex flex-row gap-4 items-center" key={index}>
               <img
                 width={70}
                 height={70}
