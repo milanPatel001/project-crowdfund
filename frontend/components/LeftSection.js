@@ -9,11 +9,9 @@ import {
 export default function LeftSection({ fundData }) {
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mt-3">
-      <h1 className="text-3xl font-semibold mb-4 break-all">
-        {fundData.title}
-      </h1>
+      <h1 className="text-3xl font-semibold mb-4">{fundData.title}</h1>
       <Image
-        src={"/crowdfunding.jpg"}
+        src={fundData.img}
         alt="Crowdfunding Campaign"
         className="mb-4 rounded-xl"
         width={800}
@@ -29,7 +27,7 @@ export default function LeftSection({ fundData }) {
           loading="lazy"
         />
         <p className="text-xl font-serif">
-          {fundData.name} is organizaing this fundraise
+          {fundData.name} is organizing this fundraise
         </p>
       </div>
 

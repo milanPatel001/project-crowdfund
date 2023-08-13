@@ -99,7 +99,11 @@ export default function FundPage() {
           onClose={closeSeeAllModal}
           fundData={fundData}
         />
-        <LeaderBoard isOpen={isleaderBoardOpen} onClose={closeisleaderBoard} />
+        <LeaderBoard
+          isOpen={isleaderBoardOpen}
+          onClose={closeisleaderBoard}
+          fundData={fundData}
+        />
 
         <ShareModal isOpen={isShareModalOpen} onClose={closeShareModal} />
 

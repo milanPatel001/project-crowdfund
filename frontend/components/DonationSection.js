@@ -142,7 +142,7 @@ export default function DonationSection() {
 
       <p className=" font-serif text-gray-500 mt-5">
         Show your appreciation for great service by leaving a tip. Your
-        generosity is always appreciated!
+        generosity is always appreciated! (for website maintenance)
       </p>
       <div className="flex gap-2 mt-3 justify-center" role="group">
         <button

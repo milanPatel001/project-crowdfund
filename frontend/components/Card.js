@@ -13,18 +13,14 @@ export default function Card({ fund }) {
     setProgress(percent);
   }, [fund.total_donation]);
 
+  //objectFit="contain" layout="fill"
   return (
     <div
       className="flex flex-col gap-1 w-72 h-96 rounded-xl bg-white hover:scale-105 transition ease-in-out duration-300 shadow-lg cursor-pointer"
       onClick={() => router.push(`/${fund.id}`)}
     >
-      <div className="h-2/5 rounded-t-xl relative">
-        <Image
-          objectFit="contain"
-          layout="fill"
-          src="/ancestors.png"
-          alt="ok"
-        />
+      <div className="h-2/5 rounded-t-xl relative overflow-hidden">
+        <Image width={500} height={500} src={fund.img} alt="ok" />
       </div>
       <div className="flex flex-col gap-1 p-3">
         {/* Place */}
