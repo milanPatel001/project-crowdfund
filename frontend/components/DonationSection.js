@@ -69,7 +69,7 @@ export default function DonationSection() {
   };
 
   const handleDonationClick = () => {
-    if (Number(donationInput) <= 5) {
+    if (Number(donationInput) < 5) {
       toast.error("Donation amount must be at least $5.00", {
         toastId: toast_id,
         position: "top-center",
