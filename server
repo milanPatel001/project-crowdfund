@@ -4,10 +4,7 @@
 const http = require("http");
 //socket.io for real time bidirectional communication between server and client, also uses tcp
 const socketIO = require("socket.io");
-const {
-  PriorityQueue,
-  MaxPriorityQueue,
-} = require("@datastructures-js/priority-queue");
+const { PriorityQueue } = require("@datastructures-js/priority-queue");
 
 //creating http server
 const server = http.createServer();
@@ -855,14 +852,28 @@ const fundsData = [
   },
 ];
 
-//Stores top donations (use a priority queue)
+function returnsPromise() {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, 1000);
+  });
+}
 
 ioserver.on("connection", (socket) => {
   console.log(
-    "Client",
+    "Client [",
     socket.request.connection.remoteAddress,
-    "is connected."
+    "] is connected."
   );
+
+  socket.on("event", async () => {
+    await returnsPromise();
+  });
+
+  socket.on("event disconnect", async () => {
+    await returnsPromise();
+  });
 
   //listens for any donations by clients and then stores them
   socket.on("donate", (donationData) => {
@@ -934,9 +945,9 @@ ioserver.on("connection", (socket) => {
   //when disconnects it closes tcp connection
   socket.on("disconnect", () => {
     console.log(
-      "Client",
+      "Client [",
       socket.request.connection.remoteAddress,
-      "just disconnected."
+      "] just disconnected."
     );
   });
 });
