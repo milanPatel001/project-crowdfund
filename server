@@ -878,9 +878,9 @@ ioserver.on("connection", (socket) => {
   //listens for any donations by clients and then stores them
   socket.on("donate", (donationData) => {
     console.log(
-      "Client",
+      "Client [",
       socket.request.connection.remoteAddress,
-      "donated $",
+      "] donated $",
       donationData.amount,
       "to",
       fundsData[donationData.index].name
