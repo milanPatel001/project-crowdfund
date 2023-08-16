@@ -18,7 +18,7 @@ export default function DonationSection() {
   const [comment, setComment] = useState("");
   const [fundData, setFundData] = useState({});
 
-  const socket = useSocket();
+  const { socket, isAuthenticated } = useSocket();
   const params = useParams();
   const router = useRouter();
 
@@ -27,7 +27,7 @@ export default function DonationSection() {
     socket?.on("specific fund response", (fund) => {
       setFundData(fund);
     });
-  }, [socket]);
+  }, [isAuthenticated]);
 
   const handleTipChange = (percent) => {
     const amt = (Number(donationInput) * percent) / 100;

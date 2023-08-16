@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Card from "./Card";
+import { useSocket } from "./SocketProvider";
 
-export default function Main({ socket }) {
+export default function Main() {
   const [fundsData, setFundsData] = useState([]);
+
+  const { socket, isAuthenticated } = useSocket();
   const toast_id = "success1";
 
   useEffect(() => {
@@ -36,7 +39,7 @@ export default function Main({ socket }) {
       toast.clearWaitingQueue();
       setFundsData(data.fundsData);
     });
-  }, [socket]);
+  }, [isAuthenticated]);
 
   return (
     <div className="flex flex-col p-2 items-center bg-gray-200">

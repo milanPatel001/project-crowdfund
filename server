@@ -1,13 +1,14 @@
 //server
-
-//http module to create http server, it's a part of node.js and uses tcp connection
 const http = require("http");
-//socket.io for real time bidirectional communication between server and client, also uses tcp
 const socketIO = require("socket.io");
 const { PriorityQueue } = require("@datastructures-js/priority-queue");
+const express = require("express");
+const cors = require("cors");
 
-//creating http server
-const server = http.createServer();
+const app = express();
+const server = http.createServer(app);
+
+const port = 3000; // Port number that server listens for incoming connection
 
 //initialize socket.io and passing http server as argument to socketIO
 //which gives io instant which can be used to listen for incoming socket connection and events
@@ -17,15 +18,35 @@ const ioserver = socketIO(server, {
   },
 });
 
-//Port number that server listens for incoming connection
-const port = 3000;
-
 const pq = new PriorityQueue((a, b) => {
   if (a.amount > b.amount) {
     return -1;
   }
   if (a.amount < b.amount) {
     return 1;
+  }
+});
+
+const loginDetails = [
+  { email: "ok@gmail.com", password: "ok" },
+  { email: "mp@gmail.com", password: "ok2" },
+];
+
+app.use(cors());
+app.use(express.json());
+
+//handles login
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+
+  const user = loginDetails.find(
+    (u) => u.email === email && u.password === password
+  );
+
+  if (user) {
+    return res.status(200).json({ passed: true });
+  } else {
+    return res.status(401).json({ passed: false });
   }
 });
 
@@ -852,6 +873,7 @@ const fundsData = [
   },
 ];
 
+// waits for 1 sec and then resolves promise (for orderly events)
 function returnsPromise() {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -860,18 +882,16 @@ function returnsPromise() {
   });
 }
 
+// this starts when client is connected to server
 ioserver.on("connection", (socket) => {
   console.log(
     "Client [",
     socket.request.connection.remoteAddress,
-    "] is connected."
+    "] is authenticated and connected."
   );
 
+  // occurs before every event change on client (website) (for orderly events)
   socket.on("event", async () => {
-    await returnsPromise();
-  });
-
-  socket.on("event disconnect", async () => {
     await returnsPromise();
   });
 
@@ -898,7 +918,7 @@ ioserver.on("connection", (socket) => {
       amount: donationData.amount,
     });
 
-    //pushing to leaderboard
+    //pushing to leaderboard (using priority queue)
     fundsData[donationData.index].recentDonators.forEach((d) => pq.enqueue(d));
     const l = [];
     while (!pq.isEmpty()) {
@@ -929,12 +949,6 @@ ioserver.on("connection", (socket) => {
   // client asks for this data before it loads the website
   socket.on("specific fund request", (index) => {
     socket.emit("specific fund response", fundsData[index]);
-  });
-
-  socket.on("donation amount request", (data) => {
-    socket.emit("donation amount value", {
-      value: fundsData[data.index].total_donation,
-    });
   });
 
   socket.on("quit", () => {

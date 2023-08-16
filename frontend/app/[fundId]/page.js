@@ -1,7 +1,7 @@
 "use client";
 import LeftSection from "@/components/LeftSection";
 import RightSection from "@/components/RightSection";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import SeeAllModal from "@/components/SeeAllModal";
 import LeaderBoard from "@/components/LeaderBoard";
@@ -9,10 +9,13 @@ import { useSocket } from "@/components/SocketProvider";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ShareModal from "@/components/ShareModal";
+import Navbar from "@/components/Navbar";
 
 export default function FundPage() {
   const params = useParams();
-  const socket = useSocket();
+  const { socket, isAuthenticated } = useSocket();
+
+  const router = useRouter();
 
   const toast_id1 = "success2";
   const toast_id2 = "info1";
@@ -47,52 +50,59 @@ export default function FundPage() {
   };
 
   useEffect(() => {
-    socket?.emit("specific fund request", params.fundId);
-    socket?.on("specific fund response", (fund) => {
-      console.log(fund);
-      setFundData(fund);
-    });
+    if (isAuthenticated) {
+      socket?.emit("specific fund request", params.fundId);
+      socket?.on("specific fund response", (fund) => {
+        console.log(fund);
+        setFundData(fund);
+      });
 
-    socket?.on("donation", (data) => {
-      if (socket) {
-        if (socket?.id !== data.socketId) {
-          toast.info(
-            `${data.donator} contributed ${data.amount} to ${data.fundOrganizer}`,
-            {
-              toastId: toast_id2,
+      socket?.on("donation", (data) => {
+        if (socket) {
+          if (socket?.id !== data.socketId) {
+            toast.info(
+              `${data.donator} contributed ${data.amount} to ${data.fundOrganizer}`,
+              {
+                toastId: toast_id2,
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "light",
+              }
+            );
+          } else {
+            toast.success("Donated Successfully", {
+              toastId: toast_id1,
               position: "top-right",
-              autoClose: 5000,
+              autoClose: 3000,
               hideProgressBar: false,
               closeOnClick: true,
               pauseOnHover: true,
               draggable: true,
               progress: undefined,
               theme: "light",
-            }
-          );
-        } else {
-          toast.success("Donated Successfully", {
-            toastId: toast_id1,
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
-          });
+            });
+          }
+
+          toast.clearWaitingQueue();
         }
 
-        toast.clearWaitingQueue();
-      }
+        setFundData(data.fundsData[params.fundId]);
+      });
+    } else {
+      router.replace("/login");
+    }
+  }, [isAuthenticated]);
 
-      setFundData(data.fundsData[params.fundId]);
-    });
-  }, [socket]);
+  if (!isAuthenticated) return <div></div>;
 
   return (
     <div>
+      <Navbar />
       <div className="lg:flex lg:flex-row min-h-screen relative lg:mx-12 xl:mx-48">
         <SeeAllModal
           isOpen={isSeeAllModalOpen}
