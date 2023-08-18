@@ -23,30 +23,43 @@ export default function Login() {
   const handleSubmission = async (e) => {
     e.preventDefault();
 
-    const form = {
-      email,
-      password,
-    };
+    try {
+      const form = {
+        email,
+        password,
+      };
 
-    const res = await fetch("http://localhost:3000/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(form),
-      cache: "no-store",
-    });
+      const res = await fetch("http://localhost:3000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(form),
+        cache: "no-store",
+      });
 
-    const result = await res.json();
+      const result = await res.json();
 
-    if (result.passed) {
-      auth.login();
-      router.replace("/");
-    } else {
-      toast.error("Invalid Email or Password!!", {
+      if (result.passed) {
+        auth.login();
+        router.replace("/");
+      } else {
+        toast.error("Invalid Email or Password!!", {
+          position: "top-center",
+          autoClose: 4000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
+      }
+    } catch (ex) {
+      toast.warn("Server not connected!!", {
         position: "top-center",
-        autoClose: 4000,
+        autoClose: 3000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,

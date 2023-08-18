@@ -37,16 +37,20 @@ app.use(express.json());
 
 //handles login
 app.post("/login", (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const user = loginDetails.find(
-    (u) => u.email === email && u.password === password
-  );
+    const user = loginDetails.find(
+      (u) => u.email === email && u.password === password
+    );
 
-  if (user) {
-    return res.status(200).json({ passed: true });
-  } else {
-    return res.status(401).json({ passed: false });
+    if (user) {
+      return res.status(200).json({ passed: true });
+    } else {
+      return res.status(401).json({ passed: false });
+    }
+  } catch (ex) {
+    console.warn(ex);
   }
 });
 
@@ -895,7 +899,7 @@ ioserver.on("connection", (socket) => {
     await returnsPromise();
   });
 
-  //listens for any donations by clients and then stores them
+  // listens for any donations by clients and then stores them
   socket.on("donate", (donationData) => {
     console.log(
       "Client [",
@@ -966,7 +970,12 @@ ioserver.on("connection", (socket) => {
   });
 });
 
-//it starts the server that listen to a specified port
+//this listener will console log when socket connection to client fails
+ioserver.on("connect_failed", () =>
+  console.log("Not able to connect to the client")
+);
+
+//starts the server that listen to a specified port
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

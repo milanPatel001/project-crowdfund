@@ -3,8 +3,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 import socketIOClient from "socket.io-client";
 
 const SocketContext = createContext();
-const SERVER_URL_LOCAL = "http://localhost:3000";
-const SERVER_URL = "http://98.113.25.59:65535"; // Replace with the server's IP address and port
+
+const SERVER_URL = "http://localhost:3000"; // Replace with the server's IP address and port
 
 //provides socket connection only to authenticated clients
 export const SocketProvider = ({ children }) => {
@@ -21,7 +21,7 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      const s = socketIOClient(SERVER_URL_LOCAL);
+      const s = socketIOClient(SERVER_URL);
       setSocket(s);
 
       return () => {
