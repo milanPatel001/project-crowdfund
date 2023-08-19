@@ -4,6 +4,11 @@ const socketIO = require("socket.io");
 const { PriorityQueue } = require("@datastructures-js/priority-queue");
 const express = require("express");
 const cors = require("cors");
+const pool = require("./db");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
+require("dotenv").config();
 
 const app = express();
 const server = http.createServer(app);
@@ -27,25 +32,40 @@ const pq = new PriorityQueue((a, b) => {
   }
 });
 
-const loginDetails = [
-  { email: "ok@gmail.com", password: "ok" },
-  { email: "mp@gmail.com", password: "ok2" },
-];
-
 app.use(cors());
 app.use(express.json());
 
+let fundsData = [];
+
 //handles login
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = loginDetails.find(
-      (u) => u.email === email && u.password === password
-    );
+    const userQuery = {
+      text: "SELECT * FROM users WHERE email = $1",
+      values: [email],
+    };
+
+    let user = "";
+
+    const resl = await pool.query(userQuery);
+
+    if (resl.rows.length != 0) {
+      user = await bcrypt.compare(password, resl.rows[0].hashed_password);
+    } else return res.status(401).send({ passed: false });
 
     if (user) {
-      return res.status(200).json({ passed: true });
+      //creates jwt
+      const token = jwt.sign(
+        { email: req.body.email },
+        process.env.JWT_SECRET_KEY,
+        {
+          expiresIn: "2h",
+        }
+      );
+
+      return res.status(200).json({ passed: true, token });
     } else {
       return res.status(401).json({ passed: false });
     }
@@ -54,7 +74,41 @@ app.post("/login", (req, res) => {
   }
 });
 
-const fundsData = [
+app.post("/verifyToken", async (req, res) => {
+  const token = req.body.token;
+
+  console.log("AUTH::" + req.body.token);
+
+  if (!token) return res.status(401).send({ passed: false });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
+    if (decoded) {
+      const fundsQuery = {
+        text: "SELECT fd.*, coalesce(c_agg.comments_agg, '[]'::json) AS comments, coalesce(rd_agg.recent_donators_agg, '[]'::json) AS recentDonators FROM fundsData AS fd LEFT JOIN (SELECT fund_id, json_agg(json_build_object('id', id, 'donator', donator, 'amount', amount, 'comment', comment)) AS comments_agg FROM comments GROUP BY fund_id) AS c_agg ON fd.id = c_agg.fund_id LEFT JOIN (SELECT fund_id, json_agg(json_build_object('donator', donator, 'amount', amount)) AS recent_donators_agg FROM recentDonators GROUP BY fund_id) AS rd_agg ON fd.id = rd_agg.fund_id",
+        values: [],
+      };
+
+      const result = await pool.query(fundsQuery);
+
+      if (result.rows.length != 0) {
+        fundsData = [...result.rows];
+
+        //add leaderboard key
+        fundsData.forEach((f) => (f["leaderboard"] = [...f.recentdonators]));
+
+        // console.log(fundsData);
+      }
+    }
+
+    return res.status(200).send({ passed: true, decoded });
+  } catch (ex) {
+    res.status(400).send({ passed: false });
+  }
+});
+
+const fundsData2 = [
   {
     id: 0,
     name: "Mary Kate Scott",
@@ -877,15 +931,6 @@ const fundsData = [
   },
 ];
 
-// waits for 1 sec and then resolves promise (for orderly events)
-function returnsPromise() {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, 1000);
-  });
-}
-
 // this starts when client is connected to server
 ioserver.on("connection", (socket) => {
   console.log(
@@ -894,13 +939,8 @@ ioserver.on("connection", (socket) => {
     "] is authenticated and connected."
   );
 
-  // occurs before every event change on client (website) (for orderly events)
-  socket.on("event", async () => {
-    await returnsPromise();
-  });
-
   // listens for any donations by clients and then stores them
-  socket.on("donate", (donationData) => {
+  socket.on("donate", async (donationData) => {
     console.log(
       "Client [",
       socket.request.connection.remoteAddress,
@@ -910,6 +950,33 @@ ioserver.on("connection", (socket) => {
       fundsData[donationData.index].name
     );
 
+    const fundUpdateQuery = {
+      text: "UPDATE fundsdata SET donation_num = donation_num + 1, total_donation = total_donation + $1 WHERE id = $2",
+      values: [donationData.amount, donationData.index + 1],
+    };
+
+    const commentUpdateQuery = {
+      text: "INSERT into comments (fund_id, donator, amount, comment) VALUES ($1, $2, $3, $4)",
+      values: [
+        donationData.index + 1,
+        donationData.donator,
+        Number(donationData.amount),
+        donationData.comment.comment,
+      ],
+    };
+
+    const recentDonatorsUpdateQuery = {
+      text: "INSERT INTO recentdonators (fund_id, donator, amount) VALUES ($1, $2, $3)",
+      values: [
+        donationData.index + 1,
+        donationData.donator,
+        Number(donationData.amount),
+      ],
+    };
+
+    await pool.query(fundUpdateQuery);
+    await pool.query(recentDonatorsUpdateQuery);
+
     //adding to total amount
     fundsData[donationData.index].total_donation += donationData.amount;
 
@@ -917,13 +984,13 @@ ioserver.on("connection", (socket) => {
     fundsData[donationData.index].donation_num += 1;
 
     //pushing to recent donations
-    fundsData[donationData.index].recentDonators.unshift({
+    fundsData[donationData.index].recentdonators.unshift({
       donator: donationData.donator,
       amount: donationData.amount,
     });
 
     //pushing to leaderboard (using priority queue)
-    fundsData[donationData.index].recentDonators.forEach((d) => pq.enqueue(d));
+    fundsData[donationData.index].recentdonators.forEach((d) => pq.enqueue(d));
     const l = [];
     while (!pq.isEmpty()) {
       l.push(pq.dequeue());
@@ -932,6 +999,7 @@ ioserver.on("connection", (socket) => {
 
     if (donationData.comment.comment) {
       fundsData[donationData.index].comments.unshift(donationData.comment);
+      await pool.query(commentUpdateQuery);
     }
 
     //broadcasts to every client
@@ -947,6 +1015,8 @@ ioserver.on("connection", (socket) => {
 
   // client asks for this data before it loads the website
   socket.on("fundsData request", () => {
+    console.log("Server: requested and sent");
+    //console.log(fundsData);
     socket.emit("fundsData response", fundsData);
   });
 

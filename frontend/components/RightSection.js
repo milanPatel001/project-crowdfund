@@ -58,7 +58,7 @@ export default function RightSection({
 
       {/* Recent Donations - max 3 on display*/}
       <div className="flex flex-col gap-5">
-        {fundData?.recentDonators?.slice(0, 4).map((p) => (
+        {fundData?.recentdonators?.slice(0, 4).map((p) => (
           <div key={p.amount} className="flex flex-row gap-2">
             <img
               width={40}

@@ -51,9 +51,8 @@ export default function FundPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      socket?.emit("specific fund request", params.fundId);
+      socket?.emit("specific fund request", params.fundId - 1);
       socket?.on("specific fund response", (fund) => {
-        console.log(fund);
         setFundData(fund);
       });
 
@@ -91,7 +90,7 @@ export default function FundPage() {
           toast.clearWaitingQueue();
         }
 
-        setFundData(data.fundsData[params.fundId]);
+        setFundData(data.fundsData[params.fundId - 1]);
       });
     } else {
       router.replace("/login");

@@ -3,12 +3,14 @@
 import { HomeIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useSocket } from "./SocketProvider";
+import { deleteCookie } from "cookies-next";
 
 export default function Navbar() {
   const router = useRouter();
   const { logout } = useSocket();
 
   const handleLogout = () => {
+    deleteCookie("token");
     logout();
     router.replace("/login");
   };

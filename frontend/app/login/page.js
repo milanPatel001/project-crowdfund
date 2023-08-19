@@ -4,6 +4,7 @@ import { useSocket } from "@/components/SocketProvider";
 import LockClosedIcon from "@heroicons/react/24/outline/LockClosedIcon";
 import { redirect, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { setCookie } from "cookies-next";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -42,7 +43,8 @@ export default function Login() {
       const result = await res.json();
 
       if (result.passed) {
-        auth.login();
+        setCookie("token", result.token);
+        //auth.login();
         router.replace("/");
       } else {
         toast.error("Invalid Email or Password!!", {

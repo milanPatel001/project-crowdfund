@@ -24,6 +24,8 @@ export const SocketProvider = ({ children }) => {
       const s = socketIOClient(SERVER_URL);
       setSocket(s);
 
+      console.log("Provider: Connected");
+
       return () => {
         s.disconnect();
       };

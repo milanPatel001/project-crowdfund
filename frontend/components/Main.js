@@ -13,33 +13,37 @@ export default function Main() {
   const toast_id = "success1";
 
   useEffect(() => {
-    socket?.emit("fundsData request");
-    socket?.on("fundsData response", (fundsData) => {
-      setFundsData(fundsData);
-    });
+    console.log("Inside Main: " + isAuthenticated);
+    if (isAuthenticated && socket) {
+      console.log("In socket lisnteners block");
+      socket?.emit("fundsData request");
+      socket?.on("fundsData response", (fundsData) => {
+        setFundsData(fundsData);
+      });
 
-    socket?.on("donation", (data) => {
-      if (socket?.id !== data.socketId) {
-        toast.info(
-          `${data.donator} contributed $ ${data.amount} to ${data.fundOrganizer}`,
-          {
-            toastId: toast_id,
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
-          }
-        );
-      }
+      socket?.on("donation", (data) => {
+        if (socket?.id !== data.socketId) {
+          toast.info(
+            `${data.donator} contributed $ ${data.amount} to ${data.fundOrganizer}`,
+            {
+              toastId: toast_id,
+              position: "top-right",
+              autoClose: 5000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+              theme: "light",
+            }
+          );
+        }
 
-      toast.clearWaitingQueue();
-      setFundsData(data.fundsData);
-    });
-  }, [isAuthenticated]);
+        toast.clearWaitingQueue();
+        setFundsData(data.fundsData);
+      });
+    }
+  }, [socket]);
 
   return (
     <div className="flex flex-col p-2 items-center bg-gray-200">

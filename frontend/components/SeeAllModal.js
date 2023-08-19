@@ -26,7 +26,7 @@ export default function SeeAllModal({ isOpen, onClose, fundData }) {
         </div>
 
         <div className="p-4 overflow-auto flex flex-col gap-3">
-          {fundData?.recentDonators.map((d, index) => (
+          {fundData?.recentdonators.map((d, index) => (
             <div className="flex flex-row gap-4 items-center" key={index}>
               <img
                 width={70}

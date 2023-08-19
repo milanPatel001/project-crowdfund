@@ -23,7 +23,7 @@ export default function DonationSection() {
   const router = useRouter();
 
   useEffect(() => {
-    socket?.emit("specific fund request", params.fundId);
+    socket?.emit("specific fund request", params.fundId - 1);
     socket?.on("specific fund response", (fund) => {
       setFundData(fund);
     });
@@ -91,7 +91,7 @@ export default function DonationSection() {
       };
 
       const data = {
-        index: params.fundId,
+        index: params.fundId - 1,
         amount: totalAmount,
         donator: name,
         comment: commentObj,
