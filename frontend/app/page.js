@@ -8,7 +8,7 @@ import { useEffect } from "react";
 import { getCookie } from "cookies-next";
 
 export default function Home() {
-  const { socket, isAuthenticated, login } = useSocket();
+  const { socket, isAuthenticated, login, setId } = useSocket();
   const router = useRouter();
 
   const sendCookie = async (token) => {
@@ -26,6 +26,7 @@ export default function Home() {
 
     if (result.passed && result.decoded.email) {
       console.log("Got data");
+      setId(result.decoded.id);
       login();
     } else router.replace("/login");
   };
@@ -40,39 +41,6 @@ export default function Home() {
     }
   }, [isAuthenticated]);
 
-  /*
-  useEffect(() => {
-    if (isAuthenticated && socket) {
-      console.log("In socket lisnteners block");
-      socket?.emit("fundsData request");
-      socket?.on("fundsData response", (fundsData) => {
-        setFundsData(fundsData);
-      });
-
-      socket?.on("donation", (data) => {
-        if (socket?.id !== data.socketId) {
-          toast.info(
-            `${data.donator} contributed $ ${data.amount} to ${data.fundOrganizer}`,
-            {
-              toastId: toast_id,
-              position: "top-right",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-              theme: "light",
-            }
-          );
-        }
-
-        toast.clearWaitingQueue();
-        setFundsData(data.fundsData);
-      });
-    }
-  }, [socket]);
-*/
   if (!isAuthenticated) return <div></div>;
   return (
     <div className="flex flex-col">

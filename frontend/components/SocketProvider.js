@@ -10,6 +10,11 @@ const SERVER_URL = "http://localhost:3000"; // Replace with the server's IP addr
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [isAuthenticated, setisAuthenticated] = useState(false);
+  const [userId, setUserId] = useState("");
+
+  const setId = (id) => {
+    setUserId(id);
+  };
 
   const login = () => {
     setisAuthenticated(true);
@@ -33,7 +38,9 @@ export const SocketProvider = ({ children }) => {
   }, [isAuthenticated]);
 
   return (
-    <SocketContext.Provider value={{ socket, login, logout, isAuthenticated }}>
+    <SocketContext.Provider
+      value={{ socket, login, logout, isAuthenticated, setId, userId }}
+    >
       {children}
     </SocketContext.Provider>
   );

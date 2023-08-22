@@ -18,7 +18,7 @@ export default function DonationSection() {
   const [comment, setComment] = useState("");
   const [fundData, setFundData] = useState({});
 
-  const { socket, isAuthenticated } = useSocket();
+  const { socket, isAuthenticated, userId } = useSocket();
   const params = useParams();
   const router = useRouter();
 
@@ -95,6 +95,9 @@ export default function DonationSection() {
         amount: totalAmount,
         donator: name,
         comment: commentObj,
+        user_id: userId,
+        organizer: fundData.name,
+        beneficiary: fundData.beneficiary_name,
       };
 
       socket.emit("donate", data);
@@ -117,7 +120,7 @@ export default function DonationSection() {
           <p className=" text-gray-400 font-normal">
             Your donation will benefit{" "}
             <span className="font-bold text-gray-600">
-              {fundData.beneficiaryName}
+              {fundData.beneficiary_name}
             </span>
           </p>
         </div>

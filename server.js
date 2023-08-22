@@ -37,6 +37,27 @@ app.use(express.json());
 
 let fundsData = [];
 
+app.post("/signup", async (req, res) => {
+  try {
+    const { lname, fname, email, password } = req.body;
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const userSignUpQuery = {
+      text: "INSERT INTO users(fname, lname, email, hashed_password) VALUES ($1, $2, $3, $4) RETURNING id",
+      values: [fname, lname, email, hashedPassword],
+    };
+
+    const resl = await pool.query(userSignUpQuery);
+    if (resl.rows.length != 0) {
+      return res.status(200).send({ passed: true });
+    }
+  } catch (ex) {
+    res.status(401).send({ passed: false });
+  }
+});
+
 //handles login
 app.post("/login", async (req, res) => {
   try {
@@ -58,7 +79,7 @@ app.post("/login", async (req, res) => {
     if (user) {
       //creates jwt
       const token = jwt.sign(
-        { email: req.body.email },
+        { email: req.body.email, id: resl.rows[0].id },
         process.env.JWT_SECRET_KEY,
         {
           expiresIn: "2h",
@@ -974,6 +995,18 @@ ioserver.on("connection", (socket) => {
       ],
     };
 
+    const historyQuery = {
+      text: "INSERT INTO history (user_id, amount, beneficiary, organizer, donated_at) VALUES ($1, $2, $3, $4, $5)",
+      values: [
+        donationData.user_id,
+        Number(donationData.amount),
+        donationData.beneficiary,
+        donationData.organizer,
+        "today",
+      ],
+    };
+
+    await pool.query(historyQuery);
     await pool.query(fundUpdateQuery);
     await pool.query(recentDonatorsUpdateQuery);
 
@@ -1023,6 +1056,23 @@ ioserver.on("connection", (socket) => {
   // client asks for this data before it loads the website
   socket.on("specific fund request", (index) => {
     socket.emit("specific fund response", fundsData[index]);
+  });
+
+  socket.on("history", async (user_id) => {
+    let history = [];
+
+    const userHistoryQuery = {
+      text: "SELECT * FROM history WHERE user_id = $1",
+      values: [user_id],
+    };
+
+    const res = await pool.query(userHistoryQuery);
+
+    if (res.rows.length != 0) {
+      history = [...res.rows];
+    }
+
+    socket.emit("historyClient", history);
   });
 
   socket.on("quit", () => {
