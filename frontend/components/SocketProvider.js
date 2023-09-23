@@ -26,7 +26,7 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      const s = socketIOClient(process.env.NEXT_PUBLIC_SERVER_URL + ":6608");
+      const s = socketIOClient(process.env.NEXT_PUBLIC_SERVER_URL);
       setSocket(s);
 
       console.log("Provider: Connected");
