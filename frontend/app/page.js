@@ -12,15 +12,18 @@ export default function Home() {
   const router = useRouter();
 
   const sendCookie = async (token) => {
-    const res = await fetch("http://localhost:3000/verifyToken", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ token }),
-      cache: "no-store",
-    });
+    const res = await fetch(
+      process.env.NEXT_PUBLIC_SERVER_URL + "/verifyToken",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ token }),
+        cache: "no-store",
+      }
+    );
 
     const result = await res.json();
 

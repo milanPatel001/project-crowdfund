@@ -27,7 +27,7 @@ export default function SignUp() {
         password,
       };
 
-      const res = await fetch("http://localhost:3000/signup", {
+      const res = await fetch(process.env.NEXT_PUBLIC_SERVER_URL + "/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
