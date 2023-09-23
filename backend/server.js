@@ -11,6 +11,8 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const app = express();
+app.use(cors());
+
 const server = http.createServer(app);
 
 const port = 3000; // Port number that server listens for incoming connection
@@ -1079,8 +1081,8 @@ ioserver.on("connection", (socket) => {
     socket.disconnect();
   });
 
-  //Server listens for the disconnect event
-  //when disconnects it closes tcp connection
+  // Server listens for the disconnect event
+  // when disconnects it closes tcp connection
   socket.on("disconnect", () => {
     console.log(
       "Client [",
@@ -1090,12 +1092,12 @@ ioserver.on("connection", (socket) => {
   });
 });
 
-//this listener will console log when socket connection to client fails
+//  this listener will console log when socket connection to client fails
 ioserver.on("connect_failed", () =>
   console.log("Not able to connect to the client")
 );
 
-//starts the server that listen to a specified port
+// starts the server that listen to a specified port
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
