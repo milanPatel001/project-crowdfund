@@ -1098,6 +1098,6 @@ ioserver.on("connect_failed", () =>
 );
 
 // starts the server that listen to a specified port
-server.listen(port, "0.0.0.0", () => {
+server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
