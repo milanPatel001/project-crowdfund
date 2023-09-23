@@ -19,7 +19,7 @@ const port = process.env.port || 3000; // Port number that server listens for in
 
 //initialize socket.io and passing http server as argument to socketIO
 //which gives io instant which can be used to listen for incoming socket connection and events
-const ioserver = socketIO(server, {
+const ioserver = socketIO(app, {
   cors: {
     origin: "*",
   },
@@ -1098,6 +1098,6 @@ ioserver.on("connect_failed", () =>
 );
 
 // starts the server that listen to a specified port
-server.listen(port, "0.0.0.0", () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port}`);
 });
