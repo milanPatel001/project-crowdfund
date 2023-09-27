@@ -7,12 +7,14 @@ const cors = require("cors");
 const pool = require("./db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const Stripe = require("stripe");
 
 require("dotenv").config();
 
 const app = express();
 app.use(cors());
+
+const stripe = Stripe(`${process.env.STRIPE_SECRET_KEY}`);
 
 const server = http.createServer(app);
 
