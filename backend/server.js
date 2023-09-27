@@ -135,9 +135,7 @@ app.post("/verifyToken", async (req, res) => {
 });
 
 app.post("/createCheckoutSession", async (req, res) => {
-  const { data } = req.body;
-
-  console.log(req.body);
+  //console.log(req.body);
 
   const session = await stripe.checkout.sessions.create({
     line_items: [
@@ -145,9 +143,9 @@ app.post("/createCheckoutSession", async (req, res) => {
         price_data: {
           currency: "usd",
           product_data: {
-            name: data.beneficiary,
-            unit_amount: data.amount * 100,
-            description: "Donating to " + data.beneficiary,
+            name: req.body.beneficiary,
+            unit_amount: req.body.amount * 100,
+            description: "Donating to " + req.body.beneficiary,
           },
           quantity: 1,
         },
@@ -157,7 +155,7 @@ app.post("/createCheckoutSession", async (req, res) => {
     success_url: "https://project-crowdfund.vercel.app",
     payment_method_types: ["card", "cashapp", "paypal"],
     metadata: {
-      data,
+      data: req.body,
     },
   });
 
