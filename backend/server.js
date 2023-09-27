@@ -147,9 +147,9 @@ app.post("/createCheckoutSession", async (req, res) => {
         {
           price_data: {
             currency: "usd",
+            unit_amount: req.body.amount * 100,
             product_data: {
               name: req.body.beneficiary,
-              unit_amount: req.body.amount * 100,
               description: "Donating to " + req.body.beneficiary,
             },
           },
