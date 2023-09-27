@@ -179,7 +179,8 @@ app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
       process.env.STRIPE_SIGNING_SECRET
     );
   } catch (err) {
-    response.status(400).send(`Webhook Error: ${err.message}`);
+    console.log(err);
+    res.status(400).send({ passed: false });
     return;
   }
 
