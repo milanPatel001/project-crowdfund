@@ -137,8 +137,6 @@ app.post("/verifyToken", async (req, res) => {
 });
 
 app.post("/createCheckoutSession", async (req, res) => {
-  //console.log(req.body);
-
   let session;
 
   try {
@@ -160,7 +158,7 @@ app.post("/createCheckoutSession", async (req, res) => {
       success_url: "https://project-crowdfund.vercel.app",
       payment_method_types: ["card", "cashapp", "paypal"],
       metadata: {
-        data: req.body,
+        socketId: req.body.socketId,
       },
     });
   } catch (ex) {
@@ -190,7 +188,8 @@ app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
   // Handle the event
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    ioserver.emit("paymentCompleted", data);
+
+    ioserver.emit("paymentCompleted", session.metadata.socketId);
   }
 
   // Return a 200 response to acknowledge receipt of the event
