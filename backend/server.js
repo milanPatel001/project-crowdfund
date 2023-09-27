@@ -8,6 +8,7 @@ const pool = require("./db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Stripe = require("stripe");
+const { buffer } = require("micro");
 
 require("dotenv").config();
 
@@ -167,14 +168,17 @@ app.post("/createCheckoutSession", async (req, res) => {
   }
 });
 
-app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
+app.post("/webhook", async (req, res) => {
+  const requestBuffer = await buffer(req);
+  const payload = requestBuffer.toString();
+
   const sig = req.headers["stripe-signature"];
 
-  let event = req.body;
+  let event;
 
   try {
     event = stripe.webhooks.constructEvent(
-      req.body,
+      payload,
       sig,
       process.env.STRIPE_SIGNING_SECRET
     );
