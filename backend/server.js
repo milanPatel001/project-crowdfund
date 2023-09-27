@@ -137,10 +137,8 @@ app.post("/verifyToken", async (req, res) => {
 });
 
 app.post("/createCheckoutSession", async (req, res) => {
-  let session;
-
   try {
-    session = await stripe.checkout.sessions.create({
+    const session = await stripe.checkout.sessions.create({
       line_items: [
         {
           price_data: {
@@ -161,12 +159,12 @@ app.post("/createCheckoutSession", async (req, res) => {
         socketId: req.body.socketId,
       },
     });
+
+    return res.status(200).send({ id: session.id });
   } catch (ex) {
     console.log(ex);
     return res.status(500).send({ passed: false });
   }
-
-  return res.status(200).send({ id: session.id });
 });
 
 app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
