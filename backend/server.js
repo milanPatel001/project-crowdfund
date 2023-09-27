@@ -160,7 +160,7 @@ app.post("/createCheckoutSession", async (req, res) => {
       },
     });
 
-    return res.status(200).send({ id: session.id });
+    return res.status(200).send({ url: session.url });
   } catch (ex) {
     console.log(ex);
     return res.status(500).send({ passed: false });
