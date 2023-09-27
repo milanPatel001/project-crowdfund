@@ -137,27 +137,34 @@ app.post("/verifyToken", async (req, res) => {
 app.post("/createCheckoutSession", async (req, res) => {
   //console.log(req.body);
 
-  const session = await stripe.checkout.sessions.create({
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: req.body.beneficiary,
-            unit_amount: req.body.amount * 100,
-            description: "Donating to " + req.body.beneficiary,
+  let session;
+
+  try {
+    session = await stripe.checkout.sessions.create({
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: req.body.beneficiary,
+              unit_amount: req.body.amount * 100,
+              description: "Donating to " + req.body.beneficiary,
+            },
+            quantity: 1,
           },
-          quantity: 1,
         },
+      ],
+      mode: "payment",
+      success_url: "https://project-crowdfund.vercel.app",
+      payment_method_types: ["card", "cashapp", "paypal"],
+      metadata: {
+        data: req.body,
       },
-    ],
-    mode: "payment",
-    success_url: "https://project-crowdfund.vercel.app",
-    payment_method_types: ["card", "cashapp", "paypal"],
-    metadata: {
-      data: req.body,
-    },
-  });
+    });
+  } catch (ex) {
+    console.log(ex);
+    return res.status(500).send({ passed: false });
+  }
 
   return res.status(200).send({ id: session.id });
 });

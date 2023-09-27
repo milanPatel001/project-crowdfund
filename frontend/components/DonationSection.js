@@ -94,7 +94,12 @@ export default function DonationSection() {
         }
       );
 
-      if (res.status == 400 || res.status == 401 || res.status == 404) {
+      if (
+        res.status == 400 ||
+        res.status == 401 ||
+        res.status == 404 ||
+        res.status == 500
+      ) {
         console.error("Error before json");
         return;
       }
