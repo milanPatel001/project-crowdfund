@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { useSocket } from "./SocketProvider";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import { loadStripe } from "@stripe/stripe-js";
 import "react-toastify/dist/ReactToastify.css";
+
+const stripePromise = loadStripe(process.env.stripe_public_key);
 
 export default function DonationSection() {
   const [tipButton, setTipButton] = useState(0);
@@ -26,6 +29,11 @@ export default function DonationSection() {
     socket?.emit("specific fund request", params.fundId - 1);
     socket?.on("specific fund response", (fund) => {
       setFundData(fund);
+    });
+    socket?.on("paymentCompleted", (data) => {
+      if (data.socketId === socket.id) {
+        socket.emit("donate", data);
+      }
     });
   }, [isAuthenticated]);
 
@@ -68,6 +76,35 @@ export default function DonationSection() {
     }
   };
 
+  const createCheckoutSession = async (data) => {
+    const stripe = await stripePromise;
+
+    try {
+      const res = await fetch(
+        process.env.NEXT_PUBLIC_SERVER_URL + "/createCheckoutSession",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(data),
+          cache: "no-store",
+        }
+      );
+
+      const checkoutSession = await res.json();
+
+      const result = await stripe.redirectToCheckout({
+        sessionId: checkoutSession.data.id,
+      });
+
+      if (result.error) alert(result.error.message);
+    } catch (ex) {
+      console.error(ex);
+    }
+  };
+
   const handleDonationClick = () => {
     if (Number(donationInput) < 5) {
       toast.error("Donation amount must be at least $5.00", {
@@ -100,9 +137,11 @@ export default function DonationSection() {
         beneficiary: fundData.beneficiary_name,
       };
 
-      socket.emit("donate", data);
+      createCheckoutSession(data);
 
-      router.push(`/${params.fundId}`);
+      //After stripe confirms data
+      //socket.emit("donate", data);
+      //router.push(`/${params.fundId}`);
     }
   };
 
