@@ -156,7 +156,7 @@ app.post("/createCheckoutSession", async (req, res) => {
       ],
       mode: "payment",
       success_url: "https://project-crowdfund.vercel.app",
-      payment_method_types: ["card", "cashapp", "paypal"],
+      payment_method_types: ["card"],
       metadata: {
         socketId: req.body.socketId,
       },
