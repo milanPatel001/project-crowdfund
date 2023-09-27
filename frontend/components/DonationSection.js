@@ -106,12 +106,10 @@ export default function DonationSection() {
         return;
       }
 
-      console.log(res);
       const checkoutSession = await res.json();
-      console.log(checkoutSession);
 
       const result = await stripe.redirectToCheckout({
-        sessionId: checkoutSession.data.id,
+        sessionId: checkoutSession.id,
       });
 
       if (result.error) alert(result.error.message);
