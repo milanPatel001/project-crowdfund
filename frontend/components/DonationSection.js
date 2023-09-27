@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { loadStripe } from "@stripe/stripe-js";
 import "react-toastify/dist/ReactToastify.css";
 
-const stripePromise = loadStripe(process.env.stripe_public_key);
+const stripePromise = loadStripe(`${process.env.STRIPE_PUBLIC_KEY}`);
 
 export default function DonationSection() {
   const [tipButton, setTipButton] = useState(0);
@@ -83,6 +83,7 @@ export default function DonationSection() {
       const res = await fetch(
         process.env.NEXT_PUBLIC_SERVER_URL + "/createCheckoutSession",
         {
+          url: process.env.NEXT_PUBLIC_SERVER_URL + "/createCheckoutSession",
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -105,7 +106,7 @@ export default function DonationSection() {
     }
   };
 
-  const handleDonationClick = () => {
+  const handleDonationClick = async () => {
     if (Number(donationInput) < 5) {
       toast.error("Donation amount must be at least $5.00", {
         toastId: toast_id,
@@ -137,7 +138,7 @@ export default function DonationSection() {
         beneficiary: fundData.beneficiary_name,
       };
 
-      createCheckoutSession(data);
+      await createCheckoutSession(data);
 
       //After stripe confirms data
       //socket.emit("donate", data);

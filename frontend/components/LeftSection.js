@@ -91,9 +91,9 @@ export default function LeftSection({ fundData }) {
       </p>
 
       <div className="mt-5 flex flex-col gap-2">
-        {fundData?.comments?.map((c) => (
+        {fundData?.comments?.map((c, i) => (
           <>
-            <div key={c} className="mb-2 flex gap-3 p-2">
+            <div key={i} className="mb-2 flex gap-3 p-2">
               <HeartIcon className="w-8 h-8 text-red-500" />
               <div className="flex flex-col">
                 <p className="font-semibold">{c.donator}</p>
