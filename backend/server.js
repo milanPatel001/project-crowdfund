@@ -103,7 +103,7 @@ app.post("/login", async (req, res) => {
 app.post("/verifyToken", async (req, res) => {
   const token = req.body.token;
 
-  console.log("AUTH::" + req.body.token);
+  // console.log("AUTH::" + req.body.token);
 
   if (!token) return res.status(401).send({ passed: false });
 
@@ -137,6 +137,8 @@ app.post("/verifyToken", async (req, res) => {
 app.post("/createCheckoutSession", async (req, res) => {
   const { data } = req.body;
 
+  console.log(req.body);
+
   const session = await stripe.checkout.sessions.create({
     line_items: [
       {
@@ -152,14 +154,14 @@ app.post("/createCheckoutSession", async (req, res) => {
       },
     ],
     mode: "payment",
-    success_url: "localhost:3000",
+    success_url: "https://project-crowdfund.vercel.app",
     payment_method_types: ["card", "cashapp", "paypal"],
     metadata: {
       data,
     },
   });
 
-  res.send({ id: session.id });
+  return res.status(200).send({ id: session.id });
 });
 
 app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
