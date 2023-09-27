@@ -94,6 +94,11 @@ export default function DonationSection() {
         }
       );
 
+      if (res.status == 400 || res.status == 401 || res.status == 404) {
+        console.error("Error before json");
+        return;
+      }
+
       const checkoutSession = await res.json();
 
       const result = await stripe.redirectToCheckout({
