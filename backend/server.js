@@ -227,6 +227,9 @@ app.post("/webhook", async (req, res) => {
     };
 
     paymentIdPendingMap.set(session.metadata.customId, data);
+    console.log("PaymentIDMAP:---------------------");
+    console.log(session.metadata);
+    console.log(paymentIdPendingMap);
   }
 
   // Return a 200 response to acknowledge receipt of the event
