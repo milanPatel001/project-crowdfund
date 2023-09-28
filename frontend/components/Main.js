@@ -22,6 +22,7 @@ export default function Main() {
       });
 
       socket?.on("paymentCompleted", (data) => {
+        console.log("Inside payment completed");
         socket.emit("donate", data);
       });
 

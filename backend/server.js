@@ -247,6 +247,7 @@ ioserver.on("connection", (socket) => {
     clientMap.set(socket.id, customId);
 
     const data = paymentIdPendingMap.get(customId);
+    console.log(data);
     if (data) {
       socket.emit("paymentCompleted", data);
     }
