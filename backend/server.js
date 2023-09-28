@@ -271,13 +271,13 @@ ioserver.on("connection", (socket) => {
 
     const fundUpdateQuery = {
       text: "UPDATE fundsdata SET donation_num = donation_num + 1, total_donation = total_donation + $1 WHERE id = $2",
-      values: [donationData.amount, donationData.index + 1],
+      values: [donationData.amount, Number(donationData.index) + 1],
     };
 
     const commentUpdateQuery = {
       text: "INSERT into comments (fund_id, donator, amount, comment) VALUES ($1, $2, $3, $4)",
       values: [
-        donationData.index + 1,
+        Number(donationData.index) + 1,
         donationData.donator,
         Number(donationData.amount),
         donationData.comment.comment,
@@ -287,7 +287,7 @@ ioserver.on("connection", (socket) => {
     const recentDonatorsUpdateQuery = {
       text: "INSERT INTO recentdonators (fund_id, donator, amount) VALUES ($1, $2, $3)",
       values: [
-        donationData.index + 1,
+        Number(donationData.index) + 1,
         donationData.donator,
         Number(donationData.amount),
       ],
@@ -309,27 +309,33 @@ ioserver.on("connection", (socket) => {
     await pool.query(recentDonatorsUpdateQuery);
 
     //adding to total amount
-    fundsData[donationData.index].total_donation += donationData.amount;
+    fundsData[Number(donationData.index)].total_donation += Number(
+      donationData.amount
+    );
 
     //adding to donations count
-    fundsData[donationData.index].donation_num += 1;
+    fundsData[Number(donationData.index)].donation_num += 1;
 
     //pushing to recent donations
-    fundsData[donationData.index].recentdonators.unshift({
+    fundsData[Number(donationData.index)].recentdonators.unshift({
       donator: donationData.donator,
-      amount: donationData.amount,
+      amount: Number(donationData.amount),
     });
 
     //pushing to leaderboard (using priority queue)
-    fundsData[donationData.index].recentdonators.forEach((d) => pq.enqueue(d));
+    fundsData[Number(donationData.index)].recentdonators.forEach((d) =>
+      pq.enqueue(d)
+    );
     const l = [];
     while (!pq.isEmpty()) {
       l.push(pq.dequeue());
     }
-    fundsData[donationData.index].leaderboard = [...l];
+    fundsData[Number(donationData.index)].leaderboard = [...l];
 
     if (donationData.comment.comment) {
-      fundsData[donationData.index].comments.unshift(donationData.comment);
+      fundsData[Number(donationData.index)].comments.unshift(
+        donationData.comment
+      );
       await pool.query(commentUpdateQuery);
     }
 
@@ -338,10 +344,10 @@ ioserver.on("connection", (socket) => {
     //broadcasts to every client
     ioserver.emit("donation", {
       socketId: socket.id,
-      amount: donationData.amount,
+      amount: Number(donationData.index),
       fundOrganizer: fundsData[donationData.index].name,
       donator: donationData.donator,
-      index: donationData.index,
+      index: Number(donationData.index),
       fundsData: fundsData,
     });
   });
