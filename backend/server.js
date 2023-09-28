@@ -233,7 +233,7 @@ app.post("/webhook", async (req, res) => {
   }
 
   // Return a 200 response to acknowledge receipt of the event
-  res.send({ passed: true });
+  res.send();
 });
 
 /*--------------------------------- SOCKET LISTENERS -----------------------------*/
