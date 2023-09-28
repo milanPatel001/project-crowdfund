@@ -300,6 +300,8 @@ ioserver.on("connection", (socket) => {
       await pool.query(commentUpdateQuery);
     }
 
+    emittersQueue.delete(donationData.user_id);
+
     //broadcasts to every client
     ioserver.emit("donation", {
       socketId: socket.id,

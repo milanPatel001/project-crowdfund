@@ -10,10 +10,11 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ShareModal from "@/components/ShareModal";
 import Navbar from "@/components/Navbar";
+import { getCookie } from "cookies-next";
 
 export default function FundPage() {
   const params = useParams();
-  const { socket, isAuthenticated } = useSocket();
+  const { socket, isAuthenticated, login, setId } = useSocket();
 
   const router = useRouter();
 
@@ -47,6 +48,29 @@ export default function FundPage() {
 
   const closeisleaderBoard = () => {
     setisleaderBoardOpen(false);
+  };
+
+  const sendCookie = async (token) => {
+    const res = await fetch(
+      process.env.NEXT_PUBLIC_SERVER_URL + "/verifyToken",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ token }),
+        cache: "no-store",
+      }
+    );
+
+    const result = await res.json();
+
+    if (result.passed && result.decoded.email) {
+      console.log("Got data");
+      setId(result.decoded.id);
+      login();
+    } else router.replace("/login");
   };
 
   useEffect(() => {
@@ -93,7 +117,9 @@ export default function FundPage() {
         setFundData(data.fundsData[params.fundId - 1]);
       });
     } else {
-      router.replace("/login");
+      const token = getCookie("token");
+      if (!token) router.replace("/login");
+      else sendCookie(token);
     }
   }, [isAuthenticated]);
 
