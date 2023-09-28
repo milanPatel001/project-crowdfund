@@ -186,18 +186,17 @@ app.post("/createCheckoutSession", async (req, res) => {
 
 app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
   console.log("INside webhook");
-  // const requestBuffer = await buffer(req);
-  // const payload = requestBuffer.toString();
 
   const sig = req.headers["stripe-signature"];
 
   let event;
 
-  console.log(process.env.STRIPE_SIGNING_SECRET);
+  const payload = req.body;
+  console.log(payload);
 
   try {
     event = stripe.webhooks.constructEvent(
-      req.body,
+      payload,
       sig,
       process.env.STRIPE_SIGNING_SECRET
     );
