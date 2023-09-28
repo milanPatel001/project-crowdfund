@@ -15,7 +15,7 @@ require("dotenv").config();
 const app = express();
 app.use(cors());
 
-const stripe = Stripe(`${process.env.STRIPE_SECRET_KEY}`);
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 const server = http.createServer(app);
 
@@ -185,6 +185,7 @@ app.post("/createCheckoutSession", async (req, res) => {
 });
 
 app.post("/webhook", async (req, res) => {
+  console.log("INside webhook");
   const requestBuffer = await buffer(req);
   const payload = requestBuffer.toString();
 
@@ -233,7 +234,7 @@ app.post("/webhook", async (req, res) => {
   }
 
   // Return a 200 response to acknowledge receipt of the event
-  res.send();
+  res.status(200).send("received");
 });
 
 /*--------------------------------- SOCKET LISTENERS -----------------------------*/
