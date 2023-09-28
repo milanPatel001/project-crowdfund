@@ -14,7 +14,7 @@ import { getCookie } from "cookies-next";
 
 export default function FundPage() {
   const params = useParams();
-  const { socket, isAuthenticated, login, setId } = useSocket();
+  const { socket, isAuthenticated, login, setId, formData } = useSocket();
 
   const router = useRouter();
 
@@ -116,6 +116,10 @@ export default function FundPage() {
 
         setFundData(data.fundsData[params.fundId - 1]);
       });
+
+      // socket?.on("paymentCompleted", (data) => {
+      //   socket.emit("donate", data);
+      // });
     } else {
       const token = getCookie("token");
       if (!token) router.replace("/login");

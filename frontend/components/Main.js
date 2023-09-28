@@ -21,6 +21,10 @@ export default function Main() {
         setFundsData(fundsData);
       });
 
+      socket?.on("paymentCompleted", (data) => {
+        socket.emit("donate", data);
+      });
+
       socket?.on("donation", (data) => {
         if (socket?.id !== data.socketId) {
           toast.info(

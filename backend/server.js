@@ -41,8 +41,8 @@ const pq = new PriorityQueue((a, b) => {
 // socket.id -> customid
 const clientMap = new Map();
 
-//contains customId
-const emittersQueue = new Set();
+//contains customId -> {paymentdata}
+const paymentIdPendingMap = new Map();
 
 app.use(cors());
 app.use(express.json());
@@ -164,6 +164,16 @@ app.post("/createCheckoutSession", async (req, res) => {
       payment_method_types: ["card"],
       metadata: {
         customId: req.body.user_id,
+        index: req.body.index,
+        amount: req.body.amount,
+        donator: req.body.donator,
+        user_id: req.body.user_id,
+        organizer: req.body.organizer,
+        beneficiary: req.body.beneficiary,
+        socketId: req.body.socketId,
+        commentDonator: req.body.comment.donator,
+        commentAmount: req.body.comment.amount,
+        comment: req.body.comment.comment,
       },
     });
 
@@ -198,7 +208,25 @@ app.post("/webhook", async (req, res) => {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
 
-    emittersQueue.add(session.metadata.customId);
+    const commentObj = {
+      donator: session.metadata.commentDonator,
+      amount: session.metadata.commentAmount,
+      comment: session.metadata.comment,
+    };
+
+    const data = {
+      customId: session.metadata.user_id,
+      index: session.metadata.index,
+      amount: session.metadata.amount,
+      donator: session.metadata.donator,
+      user_id: session.metadata.user_id,
+      organizer: session.metadata.organizer,
+      beneficiary: session.metadata.beneficiary,
+      socketId: session.metadata.socketId,
+      comment: commentObj,
+    };
+
+    paymentIdPendingMap.set(session.metadata.customId, data);
   }
 
   // Return a 200 response to acknowledge receipt of the event
@@ -218,8 +246,9 @@ ioserver.on("connection", (socket) => {
   socket.on("storeClientInfo", (customId) => {
     clientMap.set(socket.id, customId);
 
-    if (emittersQueue.has(customId)) {
-      socket.emit("paymentCompleted");
+    const data = paymentIdPendingMap.get(customId);
+    if (data) {
+      socket.emit("paymentCompleted", data);
     }
   });
 
@@ -300,7 +329,7 @@ ioserver.on("connection", (socket) => {
       await pool.query(commentUpdateQuery);
     }
 
-    emittersQueue.delete(donationData.user_id);
+    paymentIdPendingMap.delete(donationData.user_id);
 
     //broadcasts to every client
     ioserver.emit("donation", {

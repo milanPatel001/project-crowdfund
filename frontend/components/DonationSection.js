@@ -21,9 +21,7 @@ export default function DonationSection() {
   const [comment, setComment] = useState("");
   const [fundData, setFundData] = useState({});
 
-  const [donationData, setDonationData] = useState({});
-
-  const { socket, isAuthenticated, userId } = useSocket();
+  const { socket, isAuthenticated, userId, setData } = useSocket();
   const params = useParams();
   const router = useRouter();
 
@@ -31,9 +29,6 @@ export default function DonationSection() {
     socket?.emit("specific fund request", params.fundId - 1);
     socket?.on("specific fund response", (fund) => {
       setFundData(fund);
-    });
-    socket?.on("paymentCompleted", () => {
-      socket.emit("donate", donationData);
     });
   }, [isAuthenticated]);
 
@@ -145,8 +140,6 @@ export default function DonationSection() {
         beneficiary: fundData.beneficiary_name,
         socketId: socket.id,
       };
-
-      setDonationData(data);
 
       await createCheckoutSession(data);
 

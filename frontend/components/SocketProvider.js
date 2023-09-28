@@ -40,7 +40,14 @@ export const SocketProvider = ({ children }) => {
 
   return (
     <SocketContext.Provider
-      value={{ socket, login, logout, isAuthenticated, setId, userId }}
+      value={{
+        socket,
+        login,
+        logout,
+        isAuthenticated,
+        setId,
+        userId,
+      }}
     >
       {children}
     </SocketContext.Provider>
