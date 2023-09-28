@@ -184,10 +184,10 @@ app.post("/createCheckoutSession", async (req, res) => {
   }
 });
 
-app.post("/webhook", async (req, res) => {
+app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
   console.log("INside webhook");
-  const requestBuffer = await buffer(req);
-  const payload = requestBuffer.toString();
+  // const requestBuffer = await buffer(req);
+  // const payload = requestBuffer.toString();
 
   const sig = req.headers["stripe-signature"];
 
@@ -197,7 +197,7 @@ app.post("/webhook", async (req, res) => {
 
   try {
     event = stripe.webhooks.constructEvent(
-      payload,
+      req.body,
       sig,
       process.env.STRIPE_SIGNING_SECRET
     );
@@ -239,7 +239,7 @@ app.post("/webhook", async (req, res) => {
   }
 
   // Return a 200 response to acknowledge receipt of the event
-  return res.sendStatus(200);
+  return res.json({ received: true });
 });
 
 /*--------------------------------- SOCKET LISTENERS -----------------------------*/
