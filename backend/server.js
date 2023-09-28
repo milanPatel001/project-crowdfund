@@ -229,9 +229,6 @@ app.post("/webhook", (req, res) => {
     };
 
     paymentIdPendingMap.set(session.metadata.customId, data);
-    console.log("PaymentIDMAP:---------------------");
-    console.log(session.metadata);
-    console.log(paymentIdPendingMap);
   }
 
   // Return a 200 response to acknowledge receipt of the event
@@ -252,7 +249,7 @@ ioserver.on("connection", (socket) => {
     clientMap.set(socket.id, customId);
     console.log(customId);
     console.log(paymentIdPendingMap);
-    const data = paymentIdPendingMap.get(customId);
+    const data = paymentIdPendingMap.get(customId + "");
     console.log(data);
     if (data) {
       socket.emit("paymentCompleted", data);
