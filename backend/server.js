@@ -201,11 +201,12 @@ app.post("/webhook", async (req, res) => {
     );
   } catch (err) {
     console.log(err);
-    res.status(400).send({ passed: false });
-    return;
+    return res.status(400);
   }
 
+  console.log("----------EVENT-------------");
   console.log(event);
+  console.log("-----------------");
 
   // Handle the event
   if (event.type === "checkout.session.completed") {
@@ -236,7 +237,7 @@ app.post("/webhook", async (req, res) => {
   }
 
   // Return a 200 response to acknowledge receipt of the event
-  res.status(200).send("received");
+  return res.status(200);
 });
 
 /*--------------------------------- SOCKET LISTENERS -----------------------------*/
