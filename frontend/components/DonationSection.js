@@ -32,10 +32,8 @@ export default function DonationSection() {
     socket?.on("specific fund response", (fund) => {
       setFundData(fund);
     });
-    socket?.on("paymentCompleted", (socketId) => {
-      if (socketId == socket.id) {
-        socket.emit("donate", donationData);
-      }
+    socket?.on("paymentCompleted", () => {
+      socket.emit("donate", donationData);
     });
   }, [isAuthenticated]);
 

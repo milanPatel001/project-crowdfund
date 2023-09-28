@@ -38,6 +38,12 @@ const pq = new PriorityQueue((a, b) => {
   }
 });
 
+// socket.id -> customid
+const clientMap = new Map();
+
+//contains customId
+const emittersQueue = new Set();
+
 app.use(cors());
 app.use(express.json());
 
@@ -154,10 +160,10 @@ app.post("/createCheckoutSession", async (req, res) => {
         },
       ],
       mode: "payment",
-      success_url: "https://project-crowdfund.vercel.app",
+      success_url: `https://project-crowdfund.vercel.app/${req.body.index + 1}`,
       payment_method_types: ["card"],
       metadata: {
-        socketId: req.body.socketId,
+        customId: req.body.user_id,
       },
     });
 
@@ -192,7 +198,7 @@ app.post("/webhook", async (req, res) => {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
 
-    ioserver.emit("paymentCompleted", session.metadata.socketId);
+    emittersQueue.add(session.metadata.customId);
   }
 
   // Return a 200 response to acknowledge receipt of the event
@@ -208,6 +214,14 @@ ioserver.on("connection", (socket) => {
     socket.request.connection.remoteAddress,
     "] is authenticated and connected."
   );
+
+  socket.on("storeClientInfo", (customId) => {
+    clientMap.set(socket.id, customId);
+
+    if (emittersQueue.has(customId)) {
+      socket.emit("paymentCompleted");
+    }
+  });
 
   // listens for any donations by clients and then stores them
   socket.on("donate", async (donationData) => {
@@ -338,6 +352,8 @@ ioserver.on("connection", (socket) => {
       socket.request.connection.remoteAddress,
       "] just disconnected."
     );
+
+    clientMap.delete(socket.id);
   });
 });
 
