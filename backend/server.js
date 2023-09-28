@@ -184,29 +184,26 @@ app.post("/createCheckoutSession", async (req, res) => {
   }
 });
 
-app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
+app.post("/webhook", (req, res) => {
   console.log("INside webhook");
 
-  const sig = req.headers["stripe-signature"];
+  // const sig = req.headers["stripe-signature"];
 
-  let event;
+  let event = req.body;
 
-  const payload = req.body;
-  console.log(payload);
-
-  try {
-    event = stripe.webhooks.constructEvent(
-      payload,
-      sig,
-      process.env.STRIPE_SIGNING_SECRET
-    );
-  } catch (err) {
-    console.log(err);
-    return res.sendStatus(400);
-  }
+  // try {
+  //   event = stripe.webhooks.constructEvent(
+  //     payload,
+  //     sig,
+  //     process.env.STRIPE_SIGNING_SECRET
+  //   );
+  // } catch (err) {
+  //   console.log(err);
+  //   return res.sendStatus(400);
+  // }
 
   console.log("----------EVENT-------------");
-  console.log(event);
+  //console.log(event);
   console.log("-----------------");
 
   // Handle the event
