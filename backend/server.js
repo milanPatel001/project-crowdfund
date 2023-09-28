@@ -245,7 +245,8 @@ ioserver.on("connection", (socket) => {
 
   socket.on("storeClientInfo", (customId) => {
     clientMap.set(socket.id, customId);
-
+    console.log(customId);
+    console.log(paymentIdPendingMap);
     const data = paymentIdPendingMap.get(customId);
     console.log(data);
     if (data) {
