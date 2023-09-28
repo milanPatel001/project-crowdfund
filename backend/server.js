@@ -193,6 +193,8 @@ app.post("/webhook", async (req, res) => {
 
   let event;
 
+  console.log(process.env.STRIPE_SIGNING_SECRET);
+
   try {
     event = stripe.webhooks.constructEvent(
       payload,
@@ -201,7 +203,7 @@ app.post("/webhook", async (req, res) => {
     );
   } catch (err) {
     console.log(err);
-    return res.status(400);
+    return res.sendStatus(400);
   }
 
   console.log("----------EVENT-------------");
@@ -237,7 +239,7 @@ app.post("/webhook", async (req, res) => {
   }
 
   // Return a 200 response to acknowledge receipt of the event
-  return res.status(200);
+  return res.sendStatus(200);
 });
 
 /*--------------------------------- SOCKET LISTENERS -----------------------------*/
