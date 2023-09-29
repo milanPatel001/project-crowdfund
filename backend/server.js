@@ -43,6 +43,7 @@ const clientMap = new Map();
 
 //contains customId -> {paymentdata}
 const paymentIdPendingMap = new Map();
+const fundIdMap = new Map();
 
 app.use(cors());
 app.use(express.json());
@@ -130,8 +131,12 @@ app.post("/verifyToken", async (req, res) => {
       if (result.rows.length != 0) {
         fundsData = [...result.rows];
 
-        //add leaderboard key
-        fundsData.forEach((f) => (f["leaderboard"] = [...f.recentdonators]));
+        //add leaderboard key and mapping fundId to index
+
+        for (let i = 0; i < fundsData.length; i++) {
+          fundsData[i]["leaderboard"] = [...fundsData[i].recentdonators];
+          fundIdMap.set(Number(fundsData[i].id), i);
+        }
 
         // console.log(fundsData);
       }
@@ -164,7 +169,7 @@ app.post("/createCheckoutSession", async (req, res) => {
       payment_method_types: ["card"],
       metadata: {
         customId: req.body.user_id,
-        index: req.body.index,
+        fundId: Number(req.body.fundId),
         amount: req.body.amount,
         donator: req.body.donator,
         user_id: req.body.user_id,
@@ -214,7 +219,7 @@ app.post("/webhook", (req, res) => {
 
     const data = {
       customId: session.metadata.user_id,
-      index: session.metadata.index,
+      fundId: session.metadata.fundId,
       amount: session.metadata.amount,
       donator: session.metadata.donator,
       user_id: session.metadata.user_id,
@@ -258,21 +263,20 @@ ioserver.on("connection", (socket) => {
     console.log(
       "Client [",
       socket.request.connection.remoteAddress,
-      "] donated $",
-      donationData.amount,
-      "to",
-      fundsData[donationData.index].name
+      "] donated $"
     );
+
+    const index = fundIdMap.get(donationData.fundId);
 
     const fundUpdateQuery = {
       text: "UPDATE fundsdata SET donation_num = donation_num + 1, total_donation = total_donation + $1 WHERE id = $2",
-      values: [donationData.amount, Number(donationData.index) + 1],
+      values: [donationData.amount, Number(index) + 1],
     };
 
     const commentUpdateQuery = {
       text: "INSERT into comments (fund_id, donator, amount, comment) VALUES ($1, $2, $3, $4)",
       values: [
-        Number(donationData.index) + 1,
+        donationData.fundId,
         donationData.donator,
         Number(donationData.amount),
         donationData.comment.comment,
@@ -282,7 +286,7 @@ ioserver.on("connection", (socket) => {
     const recentDonatorsUpdateQuery = {
       text: "INSERT INTO recentdonators (fund_id, donator, amount) VALUES ($1, $2, $3)",
       values: [
-        Number(donationData.index) + 1,
+        donationData.fundId,
         donationData.donator,
         Number(donationData.amount),
       ],
@@ -304,33 +308,27 @@ ioserver.on("connection", (socket) => {
     await pool.query(recentDonatorsUpdateQuery);
 
     //adding to total amount
-    fundsData[Number(donationData.index)].total_donation += Number(
-      donationData.amount
-    );
+    fundsData[Number(index)].total_donation += Number(donationData.amount);
 
     //adding to donations count
-    fundsData[Number(donationData.index)].donation_num += 1;
+    fundsData[Number(index)].donation_num += 1;
 
     //pushing to recent donations
-    fundsData[Number(donationData.index)].recentdonators.unshift({
+    fundsData[Number(index)].recentdonators.unshift({
       donator: donationData.donator,
       amount: Number(donationData.amount),
     });
 
     //pushing to leaderboard (using priority queue)
-    fundsData[Number(donationData.index)].recentdonators.forEach((d) =>
-      pq.enqueue(d)
-    );
+    fundsData[Number(index)].recentdonators.forEach((d) => pq.enqueue(d));
     const l = [];
     while (!pq.isEmpty()) {
       l.push(pq.dequeue());
     }
-    fundsData[Number(donationData.index)].leaderboard = [...l];
+    fundsData[Number(index)].leaderboard = [...l];
 
     if (donationData.comment.comment) {
-      fundsData[Number(donationData.index)].comments.unshift(
-        donationData.comment
-      );
+      fundsData[Number(index)].comments.unshift(donationData.comment);
       await pool.query(commentUpdateQuery);
     }
 
@@ -340,9 +338,10 @@ ioserver.on("connection", (socket) => {
     ioserver.emit("donation", {
       socketId: socket.id,
       amount: Number(donationData.index),
-      fundOrganizer: fundsData[donationData.index].name,
+      fundOrganizer: fundsData[index].name,
       donator: donationData.donator,
-      index: Number(donationData.index),
+      fundId: donationData.fundId,
+      index: index,
       fundsData: fundsData,
     });
   });
@@ -354,7 +353,8 @@ ioserver.on("connection", (socket) => {
   });
 
   // client asks for this data before it loads the website
-  socket.on("specific fund request", (index) => {
+  socket.on("specific fund request", (fundId) => {
+    const index = fundIdMap.get(fundId);
     socket.emit("specific fund response", fundsData[index]);
   });
 

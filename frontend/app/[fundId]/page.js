@@ -75,7 +75,7 @@ export default function FundPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      socket?.emit("specific fund request", params.fundId - 1);
+      socket?.emit("specific fund request", Number(params.fundId));
       socket?.on("specific fund response", (fund) => {
         setFundData(fund);
       });
@@ -99,7 +99,7 @@ export default function FundPage() {
           toast.clearWaitingQueue();
         }
 
-        setFundData(data.fundsData[params.fundId - 1]);
+        setFundData(data.fundsData[data.index]);
       });
 
       // socket?.on("paymentCompleted", (data) => {
