@@ -27,7 +27,7 @@ export default function Main() {
       });
 
       socket?.on("donationByAnotherUser", (data) => {
-        if (userId == data.ID) {
+        if (userId == data.userId) {
           toast.success("Donated Successfully", {
             toastId: toast_id,
             position: "top-right",

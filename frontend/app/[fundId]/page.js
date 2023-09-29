@@ -81,7 +81,7 @@ export default function FundPage() {
 
       socket?.on("donationByAnotherUser", (data) => {
         if (socket) {
-          if (userId == data.ID) {
+          if (userId == data.userId) {
             toast.success("Donated Successfully", {
               toastId: toast_id1,
               position: "top-right",
