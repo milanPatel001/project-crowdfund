@@ -82,22 +82,7 @@ export default function FundPage() {
 
       socket?.on("donation", (data) => {
         if (socket) {
-          if (socket?.id !== data.socketId) {
-            toast.info(
-              `${data.donator} contributed ${data.amount} to ${data.fundOrganizer}`,
-              {
-                toastId: toast_id2,
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                theme: "light",
-              }
-            );
-          } else {
+          if (socket?.id === data.socketId) {
             toast.success("Donated Successfully", {
               toastId: toast_id1,
               position: "top-right",

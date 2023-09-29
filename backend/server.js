@@ -202,10 +202,6 @@ app.post("/webhook", (req, res) => {
   //   return res.sendStatus(400);
   // }
 
-  console.log("----------EVENT-------------");
-  //console.log(event);
-  console.log("-----------------");
-
   // Handle the event
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
@@ -247,10 +243,9 @@ ioserver.on("connection", (socket) => {
 
   socket.on("storeClientInfo", (customId) => {
     clientMap.set(socket.id, customId);
-    console.log(customId);
-    console.log(paymentIdPendingMap);
+
     const data = paymentIdPendingMap.get(customId + "");
-    console.log(data);
+
     if (data) {
       socket.emit("paymentCompleted", data);
     }
@@ -341,7 +336,7 @@ ioserver.on("connection", (socket) => {
 
     paymentIdPendingMap.delete(donationData.user_id);
 
-    //broadcasts to every client
+    // broadcasts to every client
     ioserver.emit("donation", {
       socketId: socket.id,
       amount: Number(donationData.index),
@@ -355,7 +350,6 @@ ioserver.on("connection", (socket) => {
   // client asks for this data before it loads the website
   socket.on("fundsData request", () => {
     console.log("Server: requested and sent");
-    //console.log(fundsData);
     socket.emit("fundsData response", fundsData);
   });
 

@@ -27,21 +27,18 @@ export default function Main() {
       });
 
       socket?.on("donation", (data) => {
-        if (socket?.id !== data.socketId) {
-          toast.info(
-            `${data.donator} contributed $ ${data.amount} to ${data.fundOrganizer}`,
-            {
-              toastId: toast_id,
-              position: "top-right",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-              theme: "light",
-            }
-          );
+        if (socket?.id === data.socketId) {
+          toast.success("Donated Successfully", {
+            toastId: toast_id,
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+          });
         }
 
         toast.clearWaitingQueue();

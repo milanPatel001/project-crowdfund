@@ -4,8 +4,6 @@ import socketIOClient from "socket.io-client";
 
 const SocketContext = createContext();
 
-const SERVER_URL = "http://localhost:3000"; // Replace with the server's IP address and port
-
 //provides socket connection only to authenticated clients
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
