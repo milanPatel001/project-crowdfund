@@ -270,7 +270,7 @@ ioserver.on("connection", (socket) => {
 
     const fundUpdateQuery = {
       text: "UPDATE fundsdata SET donation_num = donation_num + 1, total_donation = total_donation + $1 WHERE id = $2",
-      values: [donationData.amount, Number(index) + 1],
+      values: [donationData.amount, donationData.fundId],
     };
 
     const commentUpdateQuery = {
