@@ -41,9 +41,9 @@ export default function Main() {
           });
 
           toast.clearWaitingQueue();
-        } else {
-          setFundsData(data.fundsData);
         }
+
+        setFundsData(data.fundsData);
       });
     }
   }, [socket]);

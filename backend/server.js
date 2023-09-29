@@ -273,6 +273,7 @@ ioserver.on("connection", (socket) => {
     );
 
     const index = fundIdMap.get(donationData.fundId);
+    console.log(index);
 
     const fundUpdateQuery = {
       text: "UPDATE fundsdata SET donation_num = donation_num + 1, total_donation = total_donation + $1 WHERE id = $2",
@@ -314,29 +315,29 @@ ioserver.on("connection", (socket) => {
     await pool.query(recentDonatorsUpdateQuery);
 
     if (donationData.comment.comment) {
-      //fundsData[index].comments.unshift(donationData.comment);
+      fundsData[index].comments.unshift(donationData.comment);
       await pool.query(commentUpdateQuery);
     }
 
-    // //adding to total amount
-    // fundsData[index].total_donation += Number(donationData.amount);
+    //adding to total amount
+    fundsData[index].total_donation += Number(donationData.amount);
 
-    // //adding to donations count
-    // fundsData[index].donation_num += 1;
+    //adding to donations count
+    fundsData[index].donation_num += 1;
 
-    // //pushing to recent donations
-    // fundsData[index].recentdonators.unshift({
-    //   donator: donationData.donator,
-    //   amount: Number(donationData.amount),
-    // });
+    //pushing to recent donations
+    fundsData[index].recentdonators.unshift({
+      donator: donationData.donator,
+      amount: Number(donationData.amount),
+    });
 
-    // //pushing to leaderboard (using priority queue)
-    // fundsData[index].recentdonators.forEach((d) => pq.enqueue(d));
-    // const l = [];
-    // while (!pq.isEmpty()) {
-    //   l.push(pq.dequeue());
-    // }
-    // fundsData[index].leaderboard = [...l];
+    //pushing to leaderboard (using priority queue)
+    fundsData[index].recentdonators.forEach((d) => pq.enqueue(d));
+    const l = [];
+    while (!pq.isEmpty()) {
+      l.push(pq.dequeue());
+    }
+    fundsData[index].leaderboard = [...l];
 
     paymentIdPendingMap.delete(donationData.user_id);
 
