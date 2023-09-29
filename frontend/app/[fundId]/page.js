@@ -14,12 +14,11 @@ import { getCookie } from "cookies-next";
 
 export default function FundPage() {
   const params = useParams();
-  const { socket, isAuthenticated, login, setId, formData } = useSocket();
+  const { socket, isAuthenticated, login, setId, userId } = useSocket();
 
   const router = useRouter();
 
   const toast_id1 = "success2";
-  const toast_id2 = "info1";
 
   const [isSeeAllModalOpen, setIsSeeAllModalOpen] = useState(false);
   const [isleaderBoardOpen, setisleaderBoardOpen] = useState(false);
@@ -80,9 +79,9 @@ export default function FundPage() {
         setFundData(fund);
       });
 
-      socket?.on("donation", (data) => {
+      socket?.on("donationByAnotherUser", (data) => {
         if (socket) {
-          if (socket?.id === data.socketId) {
+          if (userId == data.ID) {
             toast.success("Donated Successfully", {
               toastId: toast_id1,
               position: "top-right",
@@ -94,12 +93,12 @@ export default function FundPage() {
               progress: undefined,
               theme: "light",
             });
+
+            toast.clearWaitingQueue();
+          } else {
+            socket?.emit("specific fund request", Number(params.fundId));
           }
-
-          toast.clearWaitingQueue();
         }
-
-        setFundData(data.fundsData[data.index]);
       });
 
       // socket?.on("paymentCompleted", (data) => {

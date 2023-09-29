@@ -134,7 +134,13 @@ app.post("/verifyToken", async (req, res) => {
         //add leaderboard key and mapping fundId to index
 
         for (let i = 0; i < fundsData.length; i++) {
-          fundsData[i]["leaderboard"] = [...fundsData[i].recentdonators];
+          fundsData[i].recentdonators.forEach((d) => pq.enqueue(d));
+          const l = [];
+          while (!pq.isEmpty()) {
+            l.push(pq.dequeue());
+          }
+
+          fundsData[i]["leaderboard"] = [...l];
           fundIdMap.set(Number(fundsData[i].id), i);
         }
 
@@ -169,7 +175,7 @@ app.post("/createCheckoutSession", async (req, res) => {
       payment_method_types: ["card"],
       metadata: {
         customId: req.body.user_id,
-        fundId: Number(req.body.fundId),
+        fundId: req.body.fundId,
         amount: req.body.amount,
         donator: req.body.donator,
         user_id: req.body.user_id,
@@ -219,7 +225,7 @@ app.post("/webhook", (req, res) => {
 
     const data = {
       customId: session.metadata.user_id,
-      fundId: session.metadata.fundId,
+      fundId: Number(session.metadata.fundId),
       amount: session.metadata.amount,
       donator: session.metadata.donator,
       user_id: session.metadata.user_id,
@@ -307,41 +313,40 @@ ioserver.on("connection", (socket) => {
     await pool.query(fundUpdateQuery);
     await pool.query(recentDonatorsUpdateQuery);
 
-    //adding to total amount
-    fundsData[Number(index)].total_donation += Number(donationData.amount);
-
-    //adding to donations count
-    fundsData[Number(index)].donation_num += 1;
-
-    //pushing to recent donations
-    fundsData[Number(index)].recentdonators.unshift({
-      donator: donationData.donator,
-      amount: Number(donationData.amount),
-    });
-
-    //pushing to leaderboard (using priority queue)
-    fundsData[Number(index)].recentdonators.forEach((d) => pq.enqueue(d));
-    const l = [];
-    while (!pq.isEmpty()) {
-      l.push(pq.dequeue());
-    }
-    fundsData[Number(index)].leaderboard = [...l];
-
     if (donationData.comment.comment) {
-      fundsData[Number(index)].comments.unshift(donationData.comment);
+      //fundsData[index].comments.unshift(donationData.comment);
       await pool.query(commentUpdateQuery);
     }
+
+    // //adding to total amount
+    // fundsData[index].total_donation += Number(donationData.amount);
+
+    // //adding to donations count
+    // fundsData[index].donation_num += 1;
+
+    // //pushing to recent donations
+    // fundsData[index].recentdonators.unshift({
+    //   donator: donationData.donator,
+    //   amount: Number(donationData.amount),
+    // });
+
+    // //pushing to leaderboard (using priority queue)
+    // fundsData[index].recentdonators.forEach((d) => pq.enqueue(d));
+    // const l = [];
+    // while (!pq.isEmpty()) {
+    //   l.push(pq.dequeue());
+    // }
+    // fundsData[index].leaderboard = [...l];
 
     paymentIdPendingMap.delete(donationData.user_id);
 
     // broadcasts to every client
-    ioserver.emit("donation", {
-      socketId: socket.id,
-      amount: Number(donationData.index),
-      fundOrganizer: fundsData[index].name,
-      donator: donationData.donator,
+
+    const ID = clientMap.get(socket.id);
+
+    ioserver.emit("donationByAnotherUser", {
+      userId: ID,
       fundId: donationData.fundId,
-      index: index,
       fundsData: fundsData,
     });
   });

@@ -9,7 +9,7 @@ import { useSocket } from "./SocketProvider";
 export default function Main() {
   const [fundsData, setFundsData] = useState([]);
 
-  const { socket, isAuthenticated } = useSocket();
+  const { socket, isAuthenticated, userId } = useSocket();
   const toast_id = "success1";
 
   useEffect(() => {
@@ -26,8 +26,8 @@ export default function Main() {
         socket.emit("donate", data);
       });
 
-      socket?.on("donation", (data) => {
-        if (socket?.id === data.socketId) {
+      socket?.on("donationByAnotherUser", (data) => {
+        if (userId == data.ID) {
           toast.success("Donated Successfully", {
             toastId: toast_id,
             position: "top-right",
@@ -39,10 +39,11 @@ export default function Main() {
             progress: undefined,
             theme: "light",
           });
-        }
 
-        toast.clearWaitingQueue();
-        setFundsData(data.fundsData);
+          toast.clearWaitingQueue();
+        } else {
+          setFundsData(data.fundsData);
+        }
       });
     }
   }, [socket]);
