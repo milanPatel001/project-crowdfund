@@ -1,12 +1,13 @@
 //server
-const express = require("express");
+
 const cors = require("cors");
 const pool = require("./db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Stripe = require("stripe");
-const http = require("http");
-const socketIO = require("socket.io");
+const { app, server } = require("./socketListeners");
+const express = require("express");
+
 const {
   fundsData,
   fundIdMap,
@@ -16,21 +17,11 @@ const {
 } = require("./util");
 require("dotenv").config();
 
-const app = express();
-const server = http.createServer(app);
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-
-//initialize socket.io and passing http server as argument to socketIO
-//which gives io instant which can be used to listen for incoming socket connection and events
-const ioserver = socketIO(server, {
-  cors: {
-    origin: "*",
-  },
-});
 
 /* -------------------------------EXPRESS ENDPOINTS ----------------------------*/
 
@@ -94,7 +85,7 @@ app.post("/login", async (req, res) => {
 app.post("/verifyToken", async (req, res) => {
   const token = req.body.token;
 
-  // console.log("AUTH::" + req.body.token);
+  console.log("AUTH::" + req.body.token);
 
   if (!token) return res.status(401).send({ passed: false });
 
@@ -112,6 +103,7 @@ app.post("/verifyToken", async (req, res) => {
       if (result.rows.length != 0) {
         fundsData = [...result.rows];
 
+        console.log(fundsData);
         //add leaderboard key and mapping fundId to index
 
         for (let i = 0; i < fundsData.length; i++) {
@@ -227,5 +219,3 @@ app.post("/webhook", (req, res) => {
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
-
-module.exports = { ioserver };

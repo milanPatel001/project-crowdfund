@@ -5,7 +5,19 @@ const {
   fundsData,
   pq,
 } = require("./util");
-const { ioserver } = require("./server");
+const express = require("express");
+const http = require("http");
+const socketIO = require("socket.io");
+
+const app = express();
+const server = http.createServer(app);
+//initialize socket.io and passing http server as argument to socketIO
+//which gives io instant which can be used to listen for incoming socket connection and events
+const ioserver = socketIO(server, {
+  cors: {
+    origin: "*",
+  },
+});
 
 /*--------------------------------- SOCKET LISTENERS -----------------------------*/
 
@@ -167,3 +179,5 @@ ioserver.on("connection", (socket) => {
 ioserver.on("connect_failed", () =>
   console.log("Not able to connect to the client")
 );
+
+module.exports = { app, server };
