@@ -1,4 +1,5 @@
 const { pq, fundIdMap, paymentIdPendingMap, clientMap } = require("./util");
+const pool = require("./db");
 
 module.exports = function (socket, fundsData, ioserver) {
   console.log(
