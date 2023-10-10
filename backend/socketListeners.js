@@ -1,10 +1,4 @@
-const {
-  clientMap,
-  paymentIdPendingMap,
-  fundIdMap,
-  fundsData,
-  pq,
-} = require("./util");
+const { clientMap, paymentIdPendingMap, fundIdMap, pq } = require("./util");
 const express = require("express");
 const http = require("http");
 const socketIO = require("socket.io");
