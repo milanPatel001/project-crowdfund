@@ -34,7 +34,9 @@ export default function Card({ fund }) {
 
         {/* Last Donation */}
         <p className="text-gray-500 font-light text-sm mt-3">
-          Last donation {fund.created_at}
+          {fund.created_at
+            ? "Last donation: " + fund.created_at.slice(0, 10)
+            : "Last donation: -"}
         </p>
 
         {/* Progress Bar */}

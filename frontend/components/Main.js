@@ -49,7 +49,7 @@ export default function Main() {
   }, [socket]);
 
   return (
-    <div className="flex flex-col p-2 items-center bg-gray-200 h-screen">
+    <div className="flex flex-col p-2 items-center bg-gray-50">
       <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:items-center lg:w-2/3 xl:grid-cols-3 xl:gap-10 xl:items-center xl:w-2/3">
         {fundsData?.map((fund) => (
           <Card key={fund.id} fund={fund} />

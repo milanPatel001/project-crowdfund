@@ -24,7 +24,7 @@ export default function History() {
   return (
     <div className="flex flex-col gap-2 h-screen bg-white">
       <Navbar />
-      <div className="md:w-2/3 lg:w-1/2 md:mx-auto md:rounded-lg shadow-lg border border-gray-400 bg-white mt-10 md:px-10 md:pt-5">
+      <div className="md:w-2/3 lg:w-1/2 md:mx-auto md:rounded-lg shadow-lg border border-gray-400 bg-white mt-10 md:px-10 md:py-5">
         <div className="flex gap-3 mb-2 font-medium text-lg">
           <p className="w-1/12"></p>
           <p className="w-3/12 text-center">Organizer</p>

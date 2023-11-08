@@ -1,10 +1,8 @@
 import Image from "next/image";
 import React, { useState } from "react";
-import {
-  HeartIcon,
-  UserCircleIcon,
-  ClockIcon,
-} from "@heroicons/react/24/outline";
+import { ClockIcon } from "@heroicons/react/24/outline";
+
+import { HeartIcon } from "@heroicons/react/24/solid";
 
 export default function LeftSection({ fundData }) {
   return (
@@ -36,7 +34,9 @@ export default function LeftSection({ fundData }) {
       <div className="flex gap-2 items-center mt-5">
         <ClockIcon className="w-6 h-6" />
         <p className="text-sm text-gray-500">
-          Created at {fundData.created_at}
+          {fundData.created_at
+            ? "Created at: " + fundData.created_at.slice(0, 10)
+            : "Created at: -"}
         </p>
       </div>
 
