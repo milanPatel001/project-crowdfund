@@ -30,6 +30,8 @@ func main() {
 
 	if port == "" {
 		port = ":8080"
+	} else {
+		port = ":" + port
 	}
 
 	pool, err := HandleDbConnection()
