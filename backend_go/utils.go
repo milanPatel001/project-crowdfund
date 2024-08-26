@@ -1,9 +1,11 @@
 package main
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"time"
 
@@ -150,4 +152,16 @@ func GetUserInfo(googleAccessToken string) (map[string]interface{}, error) {
 	}
 
 	return userInfo, nil
+}
+
+func EnableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "*")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+}
+
+func GenerateCustomID() string {
+	currentTime := time.Now().UnixNano()
+	randomNumber, _ := rand.Int(rand.Reader, big.NewInt(100000))
+	return fmt.Sprintf("%d-%d", currentTime, randomNumber)
 }

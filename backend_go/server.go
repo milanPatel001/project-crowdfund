@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
@@ -48,13 +49,27 @@ func main() {
 
 	r := chi.NewRouter()
 
+	r.Use(cors.Handler(cors.Options{
+		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
+		AllowedOrigins: []string{"https://*", "http://*"},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           86400, // Maximum value not ignored by any of major browsers
+	}))
+
 	r.Post("/signup", router.SignUpHandler)
 	r.Post("/login", router.LogInHandler)
 	r.Post("/verifyToken", router.verifyToken)
-	r.Get("/ws", router.WsHandler)
 
 	r.HandleFunc("/auth/google", router.GoogleLoginHandler)
 	r.Get("/auth/callback", router.GoogleCallbackHandler)
+
+	r.Get("/ws", router.WsHandler)
+
+	r.Get("/fundsData", router.FundsDataHandler)
 
 	fmt.Println("Server starting on port ", port)
 	err = http.ListenAndServe(port, r)
@@ -65,14 +80,3 @@ func main() {
 
 	fmt.Println("Server stopped")
 }
-
-/*
-
-	Websockets
-		- estabilish web socket connection with client after logging in
-
-
-	Add event creation function
-	Connect to S3
-
-*/

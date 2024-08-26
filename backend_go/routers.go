@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
+	"strconv"
+	"time"
 )
 
 var (
@@ -20,12 +21,6 @@ var (
 type Response struct {
 	Passed  bool   `json:"passed"`
 	Message string `json:"message"`
-}
-
-type TokenResponse struct {
-	Passed       bool   `json:"passed"`
-	JWTToken     string `json:"jwtToken"`
-	RefreshToken string `json:"refreshToken"`
 }
 
 func (router *Router) GoogleLoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -87,6 +82,11 @@ func (router *Router) GoogleCallbackHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	fmt.Fprintf(w, "User Info: %+v", userInfo)
+	//get user info
+
+	//check if user exists in db, if not create the user
+
+	//then create access token + refresh token and set the cookies
 
 }
 
@@ -101,7 +101,7 @@ func (router *Router) verifyToken(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, http.ErrNoCookie):
 			http.Error(w, "cookie not found", http.StatusBadRequest)
 		default:
-			log.Println(err)
+			fmt.Println(err)
 			http.Error(w, "server error", http.StatusInternalServerError)
 		}
 		return
@@ -124,12 +124,7 @@ func (router *Router) verifyToken(w http.ResponseWriter, r *http.Request) {
 
 		//generate new access token and then send it
 		token, _ := GetToken(refreshToken, REFRESH_SECRET)
-
-		fmt.Print("\nRefreshToken:\n")
-		fmt.Print(token)
-
 		userId, email := GetClaims(token)
-
 		newJwtToken, err := CreateJWTToken(userId, email)
 
 		if err != nil {
@@ -137,15 +132,29 @@ func (router *Router) verifyToken(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(TokenResponse{true, newJwtToken, refreshToken})
+		http.SetCookie(w, &http.Cookie{
+			Name:     "access",
+			Value:    newJwtToken,
+			Path:     "/",
+			Expires:  time.Now().Add(15 * time.Minute),
+			MaxAge:   86400,
+			HttpOnly: true,
+			//Secure:   true,
+		})
+		w.Write([]byte(strconv.Itoa(int(userId))))
+
+		return
+
 	}
 
-	w.Write([]byte("Access token is not expired"))
+	token, _ := GetToken(accessToken, JWT_SECRET)
+	id, _ := GetClaims(token)
+	w.Write([]byte(strconv.Itoa(int(id))))
 
 }
 
 func (router *Router) LogInHandler(w http.ResponseWriter, r *http.Request) {
+
 	sign := struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -153,7 +162,8 @@ func (router *Router) LogInHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&sign); err != nil {
 		fmt.Print(err)
-		json.NewEncoder(w).Encode(Response{false, err.Error()})
+		//json.NewEncoder(w).Encode(Response{false, err.Error()})
+		http.Error(w, "Decoding failed", http.StatusInternalServerError)
 		return
 	}
 	defer r.Body.Close()
@@ -169,6 +179,7 @@ func (router *Router) LogInHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		fmt.Println("Error creating JWT token:", err)
+		http.Error(w, "Error creating JWT token", http.StatusInternalServerError)
 		return
 	}
 
@@ -177,12 +188,32 @@ func (router *Router) LogInHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		fmt.Println("Error creating refresh token:", err)
+		http.Error(w, "Error creating refresh token", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	// w.Header().Set("Content-Type", "application/json")
+	// json.NewEncoder(w).Encode(TokenResponse{true, jwtToken, refreshToken})
 
-	json.NewEncoder(w).Encode(TokenResponse{true, jwtToken, refreshToken})
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access",
+		Value:    jwtToken,
+		Path:     "/",
+		Expires:  time.Now().Add(15 * time.Minute),
+		MaxAge:   86400,
+		HttpOnly: true,
+		//Secure:   true,
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh",
+		Value:    refreshToken,
+		Path:     "/",
+		Expires:  time.Now().Add(24 * 7 * time.Hour),
+		MaxAge:   86400,
+		HttpOnly: true,
+		//Secure:   true,
+	})
 
 }
 
@@ -218,11 +249,23 @@ func (router *Router) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := router.DB.SaveUserInfoQuery(sign.Lname, sign.Fname, sign.Email, sign.Password); err != nil {
+	if err := router.DB.SaveUserInfo(sign.Lname, sign.Fname, sign.Email, sign.Password); err != nil {
 		fmt.Print(err)
-		json.NewEncoder(w).Encode(Response{false, "Not able to save in DB"})
+		json.NewEncoder(w).Encode(Response{false, "Not able to save in Database right now!!"})
 		return
 	}
 
 	json.NewEncoder(w).Encode(Response{true, ""})
+}
+
+func (router *Router) FundsDataHandler(w http.ResponseWriter, r *http.Request) {
+	fundsData, err := router.DB.GetFundsData()
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(fundsData)
+
 }
