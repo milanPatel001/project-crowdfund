@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"github.com/stripe/stripe-go/v79"
 )
 
 type Router struct {
@@ -28,6 +29,9 @@ func main() {
 	GOOGLE_CLIENT_ID = os.Getenv("GOOGLE_CLIENT_ID")
 	GOOGLE_CLIENT_SECRET = os.Getenv("GOOGLE_CLIENT_SECRET")
 	REDIRECT_URI = os.Getenv("REDIRECT_URI")
+	STRIPE_SECRET_KEY = os.Getenv("STRIPE_SECRET_KEY")
+
+	stripe.Key = STRIPE_SECRET_KEY
 
 	if port == "" {
 		port = ":8080"
@@ -63,13 +67,15 @@ func main() {
 	r.Post("/signup", router.SignUpHandler)
 	r.Post("/login", router.LogInHandler)
 	r.Post("/verifyToken", router.verifyToken)
-
 	r.HandleFunc("/auth/google", router.GoogleLoginHandler)
 	r.Get("/auth/callback", router.GoogleCallbackHandler)
 
 	r.Get("/ws", router.WsHandler)
 
 	r.Get("/fundsData", router.FundsDataHandler)
+
+	r.Post("/createCheckoutSession", router.CreateCheckoutSession)
+	r.HandleFunc("/webhook", router.StripeWebhookHandler)
 
 	fmt.Println("Server starting on port ", port)
 	err = http.ListenAndServe(port, r)

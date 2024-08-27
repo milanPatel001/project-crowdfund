@@ -141,7 +141,7 @@ func (db *Database) GetFundsData() ([]FundData, error) {
 		data = append(data, fd)
 	}
 
-	fmt.Println(data)
+	//fmt.Println(data)
 
 	return data, nil
 }
