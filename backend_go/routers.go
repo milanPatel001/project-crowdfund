@@ -94,7 +94,7 @@ func (router *Router) GoogleCallbackHandler(w http.ResponseWriter, r *http.Reque
 
 }
 
-func (router *Router) verifyToken(w http.ResponseWriter, r *http.Request) {
+func (router *Router) VerifyToken(w http.ResponseWriter, r *http.Request) {
 
 	// get both access and refresh token
 	accessTokenCookie, err := r.Cookie("access")
@@ -103,6 +103,7 @@ func (router *Router) verifyToken(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
+			fmt.Println(err)
 			http.Error(w, "cookie not found", http.StatusBadRequest)
 		default:
 			fmt.Println(err)
@@ -118,10 +119,12 @@ func (router *Router) verifyToken(w http.ResponseWriter, r *http.Request) {
 
 	// access token expired
 	if err != nil {
+		fmt.Println(err)
 		err = ValidateToken(refreshToken, "refresh")
 
 		// refresh token expired
 		if err != nil {
+			fmt.Println(err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}

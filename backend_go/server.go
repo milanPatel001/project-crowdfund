@@ -66,7 +66,7 @@ func main() {
 
 	r.Post("/signup", router.SignUpHandler)
 	r.Post("/login", router.LogInHandler)
-	r.Post("/verifyToken", router.verifyToken)
+	r.Post("/verifyToken", router.VerifyToken)
 	r.HandleFunc("/auth/google", router.GoogleLoginHandler)
 	r.Get("/auth/callback", router.GoogleCallbackHandler)
 
