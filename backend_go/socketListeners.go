@@ -9,15 +9,29 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type Message struct {
+type Content struct {
+	UserId string `json:"userId"`
+}
+
+type Donator struct {
+	FundId      string `json:"fundId"`
+	Amount      int    `json:"amount"`
+	Beneficiary string `json:"beneficiary"`
+	Name        string `json:"donator"`
+	Comment     string `json:"comment"`
+}
+
+type Message[T []byte | Donator | Content] struct {
 	Event   string `json:"event"`
-	Content string `json:"content"`
+	Content T      `json:"content"`
 	Message string `json:"message"`
 }
 
 var (
-	clients = make(map[string]*websocket.Conn)
-	lock    = sync.Mutex{}
+	// map of userIds who donated (on joining, client can send a ws event to check if userId exist in this map, if there, then it can show toast)
+	paymentCompletedMap = make(map[string]Donator)
+	clients             = make(map[string]*websocket.Conn)
+	lock                = sync.Mutex{}
 
 	upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -28,6 +42,11 @@ var (
 )
 
 func (router *Router) WsHandler(w http.ResponseWriter, r *http.Request) {
+
+	paymentCompletedMap["6"] = Donator{"3", 69, "OOPZ", "PP", "ss"}
+
+	fmt.Println(paymentCompletedMap[""])
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("Failed to upgrade to WebSocket:", err)
@@ -57,16 +76,40 @@ func (router *Router) WsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Printf("Received msg from: %s\n", clientID)
 
-		fmt.Printf("%s", message)
+		msg := Message[Content]{}
 
-		jsonMsg, _ := json.Marshal(Message{"ss", "dd", "ff"})
+		_ = json.Unmarshal(message, &msg)
 
-		sendMessageToClient(clientID, []byte(jsonMsg))
+		//one event for checking ids in donated map on startup
+		switch msg.Event {
+		case "paymentCompletedCheck":
+
+			value, exists := paymentCompletedMap[msg.Content.UserId]
+
+			var m Message[Donator]
+
+			if exists {
+				m = Message[Donator]{"paymentCompletedCheck", value, "This user donated!!"}
+			} else {
+				m = Message[Donator]{"paymentCompletedCheck", Donator{}, "This user didn't contribute to anything!!"}
+			}
+
+			res, _ := json.Marshal(m)
+
+			SendMessageToClient(clientID, res)
+
+		case "fetchLeaderBoard":
+			//one event to fetch top 10 leaderboard donations - if in the leaderboard map, return it, else do db call
+		default:
+			res, _ := json.Marshal(Message[[]byte]{"def", []byte("Freee!!!"), "Ting!!"})
+			SendMessageToClient(clientID, res)
+
+		}
 
 	}
 }
 
-func sendMessageToClient(clientID string, message []byte) {
+func SendMessageToClient(clientID string, message []byte) {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -82,7 +125,7 @@ func sendMessageToClient(clientID string, message []byte) {
 	}
 }
 
-func broadcastMessage(message []byte) {
+func BroadcastMessage(message []byte) {
 	lock.Lock()
 	defer lock.Unlock()
 

@@ -368,7 +368,33 @@ func (router *Router) StripeWebhookHandler(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		fmt.Println(session.Object)
+		fmt.Println(session.Metadata)
+
+		// save info in DB
+		// save comment
+
+		// save recentDonator
+
+		// save history
+
+		// increase donation number in fundsData db table
+
+		amount, _ := strconv.Atoi(session.Metadata["amount"])
+
+		paymentCompletedMap[session.Metadata["userId"]] = Donator{
+			session.Metadata["fundId"],
+			amount,
+			session.Metadata["beneficiary"],
+			session.Metadata["donator"],
+			session.Metadata["comment"],
+		}
+
+		// broadcast fundId, userId, amount, donator, comment
+		msg, err := json.Marshal(paymentCompletedMap[session.Metadata["userId"]])
+		BroadcastMessage(msg)
+
+		//also update leaderboard map (append, then sort, then remove the least one)
+
 	}
 
 }
