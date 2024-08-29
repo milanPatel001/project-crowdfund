@@ -30,13 +30,14 @@ type Response struct {
 func (router *Router) VerifyToken(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("\nInside Verify TOken\n")
+
 	// get both access and refresh token
 	accessTokenCookie, err := r.Cookie("access")
 	refreshTokenCookie, err := r.Cookie("refresh")
 
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
-			fmt.Println("Access token cookie not found:", err)
+			fmt.Println("Access token cookie not found:")
 			http.Error(w, "Access token cookie not found", http.StatusBadRequest)
 		} else {
 			fmt.Println("Error retrieving access token cookie:", err)
@@ -53,9 +54,6 @@ func (router *Router) VerifyToken(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Access and refresh tokens are missing"))
 		return
 	}
-
-	fmt.Println(accessToken)
-	fmt.Println(refreshToken)
 
 	err = ValidateToken(accessToken, "access")
 
@@ -155,9 +153,6 @@ func (router *Router) LogInHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error creating refresh token", http.StatusInternalServerError)
 		return
 	}
-
-	// w.Header().Set("Content-Type", "application/json")
-	// json.NewEncoder(w).Encode(TokenResponse{true, jwtToken, refreshToken})
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "access",
@@ -330,17 +325,16 @@ func (router *Router) StripeWebhookHandler(w http.ResponseWriter, r *http.Reques
 
 		fmt.Println(session.Metadata)
 
-		// save info in DB
-		// save comment
+		// **** Save info in DB using transaction
+		err = router.DB.SaveDonation(session.Metadata)
 
-		// save recentDonator
-
-		// save history
-
-		// increase donation number in fundsData db table
+		if err != nil {
+			fmt.Println("Could not save donation data in DB")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 		amount, _ := strconv.Atoi(session.Metadata["amount"])
-
 		paymentCompletedMap[session.Metadata["userId"]] = Donator{
 			session.Metadata["fundId"],
 			amount,

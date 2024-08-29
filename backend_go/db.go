@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -144,4 +145,109 @@ func (db *Database) GetFundsData() ([]FundData, error) {
 	//fmt.Println(data)
 
 	return data, nil
+}
+
+func (db *Database) SaveComment(fundId int, donator string, amount int, comment string) error {
+	commandTag, err := db.pool.Exec(context.Background(), "INSERT INTO comments (fund_id, donator, comment, amount) VALUES($1, $2, $3, $4) ", fundId, donator, comment, amount)
+
+	if err != nil {
+		return fmt.Errorf("Insert failed: %s", err)
+	}
+
+	fmt.Printf("Comment Insert successful:\n", commandTag.RowsAffected())
+
+	return nil
+
+}
+
+func (db *Database) SaveRecentDonator(fundId int, donator string, amount int) error {
+	commandTag, err := db.pool.Exec(context.Background(), "INSERT INTO recentdonators (fund_id, donator, amount) VALUES($1, $2, $3)", fundId, donator, amount)
+
+	if err != nil {
+		return fmt.Errorf("Insert failed: %s", err)
+	}
+
+	fmt.Printf("Recent Donator Insert successful:\n", commandTag.RowsAffected())
+
+	return nil
+}
+
+func (db *Database) SaveInHistory(donator Donator, userId int, organizer string) error {
+	commandTag, err := db.pool.Exec(context.Background(), "INSERT INTO history (user_id, amount, organizer, beneficiary, donated_at) VALUES($1, $2, $3, $4, today)", userId, donator.Amount, organizer, donator.Beneficiary)
+
+	if err != nil {
+		return fmt.Errorf("Insert failed: %s", err)
+	}
+
+	fmt.Printf("History Insert successful:\n", commandTag.RowsAffected())
+
+	return nil
+}
+
+func (db *Database) IncreaseDonationInFundsData(amount int, fundId int) error {
+	commandTag, err := db.pool.Exec(context.Background(), "UPDATE fundsdata SET donation_num = donation_num + 1, total_donation = total_donation + $1 WHERE id = $2", amount, fundId)
+
+	if err != nil {
+		return fmt.Errorf("Insert failed: %s", err)
+	}
+
+	fmt.Printf("Fundata Update successful:\n", commandTag.RowsAffected())
+
+	return nil
+}
+
+func (db *Database) SaveDonation(metaData map[string]string) error {
+
+	tx, err := db.pool.Begin(context.Background())
+
+	if err != nil {
+		return fmt.Errorf("could not begin transaction: %v", err)
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback(context.Background())
+			fmt.Println("Transaction rolled back due to an error:", err)
+		}
+	}()
+
+	amount, _ := strconv.Atoi(metaData["amount"])
+	fundId, _ := strconv.Atoi(metaData["fundId"])
+	userId, _ := strconv.Atoi(metaData["userId"])
+
+	d := Donator{
+		metaData["fundId"],
+		amount,
+		metaData["beneficiary"],
+		metaData["donator"],
+		metaData["comment"],
+	}
+
+	err = db.SaveRecentDonator(fundId, d.Name, amount)
+	if err != nil {
+		return fmt.Errorf("Could not execute query: %v", err)
+	}
+
+	if d.Comment != "" {
+		err = db.SaveComment(fundId, d.Name, amount, d.Comment)
+		if err != nil {
+			return fmt.Errorf("Could not execute query: %v", err)
+		}
+	}
+
+	err = db.SaveInHistory(d, userId, metaData["organizer"])
+	if err != nil {
+		return fmt.Errorf("Could not execute query: %v", err)
+	}
+
+	err = db.IncreaseDonationInFundsData(amount, fundId)
+	if err != nil {
+		return fmt.Errorf("Could not execute query: %v", err)
+	}
+
+	if err = tx.Commit(context.Background()); err != nil {
+		return fmt.Errorf("could not commit transaction: %v", err)
+	}
+
+	return nil
 }
