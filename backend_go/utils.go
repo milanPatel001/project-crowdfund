@@ -119,7 +119,7 @@ func ValidateToken(tokenString string, tokenType string) error {
 func GetClaims(token *jwt.Token) (int64, string) {
 
 	fmt.Print("\nInside GETCLAIMS\n")
-	claims, _ := token.Claims.(jwt.MapClaims)
+	claims := token.Claims.(jwt.MapClaims)
 
 	fmt.Print(claims)
 

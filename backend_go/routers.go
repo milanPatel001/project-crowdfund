@@ -27,93 +27,35 @@ type Response struct {
 	Message string `json:"message"`
 }
 
-func (router *Router) GoogleLoginHandler(w http.ResponseWriter, r *http.Request) {
-	// Build the URL to redirect to Google's OAuth2 authorization endpoint
-	authURL := fmt.Sprintf("https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&response_type=code&scope=%s",
-		url.QueryEscape(GOOGLE_CLIENT_ID), url.QueryEscape(REDIRECT_URI), url.QueryEscape(scopes))
-
-	// Redirect the user to Google for authorization
-	http.Redirect(w, r, authURL, http.StatusSeeOther)
-}
-
-func (router *Router) GoogleCallbackHandler(w http.ResponseWriter, r *http.Request) {
-	// Get the authorization code from the query parameters
-	code := r.URL.Query().Get("code")
-	if code == "" {
-		http.Error(w, "Authorization code not provided", http.StatusBadRequest)
-		return
-	}
-
-	// Exchange the authorization code for an access token
-	tokenResp, err := http.PostForm("https://oauth2.googleapis.com/token", url.Values{
-		"client_id":     {GOOGLE_CLIENT_ID},
-		"client_secret": {GOOGLE_CLIENT_SECRET},
-		"redirect_uri":  {REDIRECT_URI},
-		"grant_type":    {"authorization_code"},
-		"code":          {code},
-	})
-
-	if err != nil {
-		http.Error(w, "Failed to exchange token: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer tokenResp.Body.Close()
-
-	body, err := io.ReadAll(tokenResp.Body)
-	if err != nil {
-		http.Error(w, "Failed to read response body: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	var tokenData map[string]interface{}
-	if err := json.Unmarshal(body, &tokenData); err != nil {
-		http.Error(w, "Failed to parse token response: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Extract the access token
-	accessToken, ok := tokenData["access_token"].(string)
-	if !ok {
-		http.Error(w, "No access token found", http.StatusInternalServerError)
-		return
-	}
-
-	// Use the access token to get user info
-	userInfo, err := GetUserInfo(accessToken)
-	if err != nil {
-		http.Error(w, "Failed to get user info: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	fmt.Fprintf(w, "User Info: %+v", userInfo)
-	//get user info
-
-	//check if user exists in db, if not create the user
-
-	//then create access token + refresh token and set the cookies
-
-}
-
 func (router *Router) VerifyToken(w http.ResponseWriter, r *http.Request) {
 
+	fmt.Println("\nInside Verify TOken\n")
 	// get both access and refresh token
 	accessTokenCookie, err := r.Cookie("access")
 	refreshTokenCookie, err := r.Cookie("refresh")
 
 	if err != nil {
-		switch {
-		case errors.Is(err, http.ErrNoCookie):
-			fmt.Println(err)
-			http.Error(w, "cookie not found", http.StatusBadRequest)
-		default:
-			fmt.Println(err)
-			http.Error(w, "server error", http.StatusInternalServerError)
+		if errors.Is(err, http.ErrNoCookie) {
+			fmt.Println("Access token cookie not found:", err)
+			http.Error(w, "Access token cookie not found", http.StatusBadRequest)
+		} else {
+			fmt.Println("Error retrieving access token cookie:", err)
+			http.Error(w, "Server error", http.StatusInternalServerError)
 		}
 		return
 	}
 
 	accessToken := accessTokenCookie.Value
 	refreshToken := refreshTokenCookie.Value
+
+	if (accessToken == "") && (refreshToken == "") {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Access and refresh tokens are missing"))
+		return
+	}
+
+	fmt.Println(accessToken)
+	fmt.Println(refreshToken)
 
 	err = ValidateToken(accessToken, "access")
 
@@ -130,12 +72,20 @@ func (router *Router) VerifyToken(w http.ResponseWriter, r *http.Request) {
 		}
 
 		//generate new access token and then send it
-		token, _ := GetToken(refreshToken, REFRESH_SECRET)
+		token, err := GetToken(refreshToken, REFRESH_SECRET)
+
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
 		userId, email := GetClaims(token)
 		newJwtToken, err := CreateJWTToken(userId, email)
 
 		if err != nil {
 			fmt.Println("Error creating JWT token:", err)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
@@ -154,7 +104,14 @@ func (router *Router) VerifyToken(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	token, _ := GetToken(accessToken, JWT_SECRET)
+	token, err := GetToken(accessToken, JWT_SECRET)
+
+	if err != nil {
+		fmt.Println("Error getting token from access token:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	id, _ := GetClaims(token)
 	w.Write([]byte(strconv.Itoa(int(id))))
 
@@ -399,5 +356,72 @@ func (router *Router) StripeWebhookHandler(w http.ResponseWriter, r *http.Reques
 		//also update leaderboard map (append, then sort, then remove the least one)
 
 	}
+
+}
+
+func (router *Router) GoogleLoginHandler(w http.ResponseWriter, r *http.Request) {
+	// Build the URL to redirect to Google's OAuth2 authorization endpoint
+	authURL := fmt.Sprintf("https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&response_type=code&scope=%s",
+		url.QueryEscape(GOOGLE_CLIENT_ID), url.QueryEscape(REDIRECT_URI), url.QueryEscape(scopes))
+
+	// Redirect the user to Google for authorization
+	http.Redirect(w, r, authURL, http.StatusSeeOther)
+}
+
+func (router *Router) GoogleCallbackHandler(w http.ResponseWriter, r *http.Request) {
+	// Get the authorization code from the query parameters
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		http.Error(w, "Authorization code not provided", http.StatusBadRequest)
+		return
+	}
+
+	// Exchange the authorization code for an access token
+	tokenResp, err := http.PostForm("https://oauth2.googleapis.com/token", url.Values{
+		"client_id":     {GOOGLE_CLIENT_ID},
+		"client_secret": {GOOGLE_CLIENT_SECRET},
+		"redirect_uri":  {REDIRECT_URI},
+		"grant_type":    {"authorization_code"},
+		"code":          {code},
+	})
+
+	if err != nil {
+		http.Error(w, "Failed to exchange token: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer tokenResp.Body.Close()
+
+	body, err := io.ReadAll(tokenResp.Body)
+	if err != nil {
+		http.Error(w, "Failed to read response body: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var tokenData map[string]interface{}
+	if err := json.Unmarshal(body, &tokenData); err != nil {
+		http.Error(w, "Failed to parse token response: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Extract the access token
+	accessToken, ok := tokenData["access_token"].(string)
+	if !ok {
+		http.Error(w, "No access token found", http.StatusInternalServerError)
+		return
+	}
+
+	// Use the access token to get user info
+	userInfo, err := GetUserInfo(accessToken)
+	if err != nil {
+		http.Error(w, "Failed to get user info: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "User Info: %+v", userInfo)
+	//get user info
+
+	//check if user exists in db, if not create the user
+
+	//then create access token + refresh token and set the cookies
 
 }
