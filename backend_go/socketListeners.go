@@ -43,9 +43,7 @@ var (
 
 func (router *Router) WsHandler(w http.ResponseWriter, r *http.Request) {
 
-	paymentCompletedMap["6"] = Donator{"3", 69, "OOPZ", "PP", "ss"}
-
-	fmt.Println(paymentCompletedMap[""])
+	//paymentCompletedMap["6"] = Donator{"3", 69, "OOPZ", "PP", "ss"}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {

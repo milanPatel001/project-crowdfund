@@ -274,7 +274,7 @@ func (router *Router) CreateCheckoutSession(w http.ResponseWriter, r *http.Reque
 			&stripe.CheckoutSessionLineItemParams{
 				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
 					Currency:   stripe.String("usd"),
-					UnitAmount: stripe.Int64(body.Amount * 100),
+					UnitAmount: stripe.Int64(int64(body.Amount) * 100),
 					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
 						Name:        stripe.String(body.Beneficiary),
 						Description: stripe.String("Donating to: " + body.Beneficiary),
