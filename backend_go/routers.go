@@ -350,7 +350,13 @@ func (router *Router) StripeWebhookHandler(w http.ResponseWriter, r *http.Reques
 		}
 
 		// broadcast fundId, userId, amount, donator, comment
-		msg, err := json.Marshal(paymentCompletedMap[session.Metadata["userId"]])
+		m := Message[Donator]{
+			"donationBroadcast",
+			paymentCompletedMap[session.Metadata["userId"]],
+			"donation broadcast",
+		}
+
+		msg, err := json.Marshal(m)
 		BroadcastMessage(msg)
 
 		//also update leaderboard map (append, then sort, then remove the least one)
