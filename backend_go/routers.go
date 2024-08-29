@@ -240,7 +240,7 @@ func (router *Router) CreateCheckoutSession(w http.ResponseWriter, r *http.Reque
 
 	body := struct {
 		FundId      string `json:"fundId"`
-		Amount      int64  `json:"amount"`
+		Amount      int    `json:"amount"`
 		Donator     string `json:"donator"`
 		UserId      string `json:"userId"`
 		Organizer   string `json:"organizer"`
@@ -257,9 +257,9 @@ func (router *Router) CreateCheckoutSession(w http.ResponseWriter, r *http.Reque
 
 	metaDataMap := make(map[string]string)
 
-	metaDataMap["customId"] = string(body.UserId)
+	metaDataMap["customId"] = body.UserId
 	metaDataMap["fundId"] = body.FundId
-	metaDataMap["amount"] = string(body.Amount)
+	metaDataMap["amount"] = strconv.Itoa(body.Amount)
 	metaDataMap["donator"] = body.Donator
 	metaDataMap["userId"] = body.UserId
 	metaDataMap["organizer"] = body.Organizer
