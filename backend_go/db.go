@@ -173,7 +173,7 @@ func (db *Database) SaveRecentDonator(fundId int, donator string, amount int) er
 }
 
 func (db *Database) SaveInHistory(donator Donator, userId int, organizer string) error {
-	commandTag, err := db.pool.Exec(context.Background(), "INSERT INTO history (user_id, amount, organizer, beneficiary, donated_at) VALUES($1, $2, $3, $4, today)", userId, donator.Amount, organizer, donator.Beneficiary)
+	commandTag, err := db.pool.Exec(context.Background(), "INSERT INTO history (user_id, amount, organizer, beneficiary, donated_at) VALUES($1, $2, $3, $4, $5)", userId, donator.Amount, organizer, donator.Beneficiary, "today")
 
 	if err != nil {
 		return fmt.Errorf("Insert failed: %s", err)
