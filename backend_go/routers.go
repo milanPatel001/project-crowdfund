@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/stripe/stripe-go/v79"
@@ -20,6 +21,8 @@ var (
 	REDIRECT_URI         string
 	STRIPE_SECRET_KEY    string
 	scopes               = "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email"
+	googleIdentifierMap  = make(map[string]int)
+	googleIdentifierLock = sync.Mutex{}
 )
 
 type Response struct {
@@ -194,7 +197,7 @@ func (router *Router) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	emailExists, err := router.DB.EmailExistsQuery(sign.Email)
+	id, err := router.DB.EmailExistsQuery(sign.Email)
 
 	if err != nil {
 		fmt.Print(err)
@@ -202,13 +205,16 @@ func (router *Router) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if emailExists {
+	if id != 0 {
 		fmt.Print("Email already exists!!")
+		// If email exists and its a google login, Update the user with new password and remove the false error
 		json.NewEncoder(w).Encode(Response{false, "Email already exists"})
 		return
 	}
 
-	if err := router.DB.SaveUserInfo(sign.Lname, sign.Fname, sign.Email, sign.Password); err != nil {
+	_, err = router.DB.SaveUserInfo(sign.Lname, sign.Fname, sign.Email, sign.Password, false)
+
+	if err != nil {
 		fmt.Print(err)
 		json.NewEncoder(w).Encode(Response{false, "Not able to save in Database right now!!"})
 		return
@@ -350,10 +356,13 @@ func (router *Router) StripeWebhookHandler(w http.ResponseWriter, r *http.Reques
 			"donation broadcast",
 		}
 
-		msg, err := json.Marshal(m)
-		BroadcastMessage(msg)
+		msg, _ := json.Marshal(m)
 
-		//also update leaderboard map (append, then sort, then remove the least one)
+		err = BroadcastMessage(msg)
+		if err != nil {
+			fmt.Println("Error broadcasting the donation data!!!")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 
 	}
 
@@ -417,11 +426,118 @@ func (router *Router) GoogleCallbackHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	fmt.Fprintf(w, "User Info: %+v", userInfo)
+	//fmt.Fprintf(w, "User Info: %+v", userInfo)
 	//get user info
+	email := userInfo["email"].(string)
+	fname := userInfo["given_name"].(string)
+	lname := userInfo["family_name"].(string)
 
 	//check if user exists in db, if not create the user
+	id, err := router.DB.EmailExistsQuery(email)
 
-	//then create access token + refresh token and set the cookies
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if id == 0 {
+		// generate a hard,random password
+		id, err = router.DB.SaveUserInfo(lname, fname, email, "pop", true)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	googleLoginIdentifier := GenerateCustomID()
+
+	func() {
+		googleIdentifierLock.Lock()
+		googleIdentifierMap[googleLoginIdentifier] = 1
+		defer googleIdentifierLock.Unlock()
+	}()
+
+	//frontendURL := fmt.Sprintf("http://localhost:3000/login")
+	frontendURL := fmt.Sprintf("http://localhost:3000/login?id=%v&email=%s&session=%s", id, email, googleLoginIdentifier)
+
+	//add google login identifier to frontendURl to prevent login hacks
+
+	// Return HTML with script to replace the current window location
+	html := fmt.Sprintf(`
+		<html>
+		<body>
+			<script>
+				window.location.replace("%s");
+			</script>
+		</body>
+		</html>
+	`, frontendURL)
+
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(html))
+
+}
+
+func (router *Router) RedirectHandler(w http.ResponseWriter, r *http.Request) {
+
+	body := struct {
+		Id        int64  `json:"id"`
+		Email     string `json:"email"`
+		SessionId string `json:"sessionId"`
+	}{}
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		fmt.Print(err)
+		http.Error(w, "Decoding failed", http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	fmt.Print(body)
+
+	if googleIdentifierMap[body.SessionId] == 0 {
+		fmt.Print("Someone Applied Login hack!!")
+		http.Error(w, "Oh boy, you messed up!!", http.StatusBadRequest)
+		return
+	}
+
+	jwtToken, err := CreateJWTToken(body.Id, body.Email)
+
+	if err != nil {
+		fmt.Println("Error creating JWT token:", err)
+		http.Error(w, "Error creating JWT token", http.StatusInternalServerError)
+		return
+	}
+
+	// Generate refresh token
+	refreshToken, err := CreateRefreshToken(body.Id, body.Email)
+
+	if err != nil {
+		fmt.Println("Error creating refresh token:", err)
+		http.Error(w, "Error creating refresh token", http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access",
+		Value:    jwtToken,
+		Path:     "/",
+		Expires:  time.Now().Add(15 * time.Minute),
+		MaxAge:   86400,
+		HttpOnly: true,
+		//Secure:   true,
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh",
+		Value:    refreshToken,
+		Path:     "/",
+		Expires:  time.Now().Add(24 * 7 * time.Hour),
+		MaxAge:   86400,
+		HttpOnly: true,
+		//Secure:   true,
+	})
 
 }

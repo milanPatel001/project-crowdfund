@@ -68,7 +68,8 @@ func main() {
 	r.Post("/login", router.LogInHandler)
 	r.Post("/verifyToken", router.VerifyToken)
 	r.HandleFunc("/auth/google", router.GoogleLoginHandler)
-	r.Get("/auth/callback", router.GoogleCallbackHandler)
+	r.HandleFunc("/auth/callback", router.GoogleCallbackHandler)
+	r.Post("/auth/redirect", router.RedirectHandler)
 
 	r.Get("/ws", router.WsHandler)
 

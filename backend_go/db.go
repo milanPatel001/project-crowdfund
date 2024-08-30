@@ -59,37 +59,39 @@ func HandleDbConnection() (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-func (db *Database) EmailExistsQuery(email string) (bool, error) {
+func (db *Database) EmailExistsQuery(email string) (int64, error) {
 
-	var id string
+	var id int64
 	err := db.pool.QueryRow(context.Background(), "SELECT id FROM users WHERE email = $1", email).Scan(&id)
 
 	if err == pgx.ErrNoRows {
-		return false, nil
+		return -1, nil
 	}
 
-	return true, err
+	return id, err
 }
 
-func (db *Database) SaveUserInfo(lname string, fname string, email string, password string) error {
+func (db *Database) SaveUserInfo(lname string, fname string, email string, password string, googleLogin bool) (int64, error) {
 
 	hashedPassword, err := HashPassword(password)
 
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	commandTag, err := db.pool.Exec(context.Background(),
-		"INSERT INTO users (fname, lname, email, hashed_password) VALUES ($1, $2, $3, $4)",
-		fname, lname, email, hashedPassword)
+	var id int64
+
+	err = db.pool.QueryRow(context.Background(),
+		"INSERT INTO users (fname, lname, email, hashed_password, google_login) VALUES ($1, $2, $3, $4, $5)",
+		fname, lname, email, hashedPassword, googleLogin).Scan(&id)
 
 	if err != nil {
-		return fmt.Errorf("Insert failed: %s", err)
+		return -1, fmt.Errorf("Insert failed: %s", err)
 	}
 
-	fmt.Printf("Insert successful: %d rows affected\n", commandTag.RowsAffected())
+	fmt.Printf("\nUser Insert successful\n")
 
-	return nil
+	return id, nil
 }
 
 func (db *Database) DoesUserExists(email string, password string) (int64, error) {
@@ -113,7 +115,7 @@ func (db *Database) DoesUserExists(email string, password string) (int64, error)
 
 func (db *Database) GetFundsData() ([]FundData, error) {
 
-	query := "SELECT fd.*, coalesce(c_agg.comments_agg, '[]'::json) AS comments, coalesce(rd_agg.recent_donators_agg, '[]'::json) AS recentDonators FROM fundsData AS fd LEFT JOIN (SELECT fund_id, json_agg(json_build_object('id', id, 'donator', donator, 'amount', amount, 'comment', comment)) AS comments_agg FROM comments GROUP BY fund_id) AS c_agg ON fd.id = c_agg.fund_id LEFT JOIN (SELECT fund_id, json_agg(json_build_object('donator', donator, 'amount', amount)) AS recent_donators_agg FROM recentDonators GROUP BY fund_id) AS rd_agg ON fd.id = rd_agg.fund_id"
+	query := "SELECT fd.*, coalesce(c_agg.comments_agg, '[]'::json) AS comments, coalesce(rd_agg.recent_donators_agg, '[]'::json) AS recentDonators FROM fundsData AS fd LEFT JOIN (SELECT fund_id, json_agg(json_build_object('id', id, 'donator', donator, 'amount', amount, 'comment', comment)) AS comments_agg FROM comments GROUP BY fund_id) AS c_agg ON fd.id = c_agg.fund_id LEFT JOIN (SELECT fund_id, json_agg(json_build_object('donator', donator, 'amount', amount) ORDER BY id DESC) AS recent_donators_agg FROM recentDonators GROUP BY fund_id) AS rd_agg ON fd.id = rd_agg.fund_id"
 
 	rows, err := db.pool.Query(context.Background(), query)
 

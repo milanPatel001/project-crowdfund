@@ -95,9 +95,17 @@ func (router *Router) WsHandler(w http.ResponseWriter, r *http.Request) {
 			res, _ := json.Marshal(m)
 
 			SendMessageToClient(clientID, res)
-
-		case "fetchLeaderBoard":
-			//one event to fetch top 10 leaderboard donations - if in the leaderboard map, return it, else do db call
+			break
+		case "removePaymentCheck":
+			lock.Lock()
+			delete(paymentCompletedMap, msg.Content.UserId)
+			defer lock.Unlock()
+			break
+		case "removeIdentifier":
+			lock.Lock()
+			// here, userId is sessionId
+			delete(googleIdentifierMap, msg.Content.UserId)
+			defer lock.Unlock()
 		default:
 			res, _ := json.Marshal(Message[[]byte]{"def", []byte("Freee!!!"), "Ting!!"})
 			SendMessageToClient(clientID, res)
@@ -123,7 +131,7 @@ func SendMessageToClient(clientID string, message []byte) {
 	}
 }
 
-func BroadcastMessage(message []byte) {
+func BroadcastMessage(message []byte) error {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -131,6 +139,8 @@ func BroadcastMessage(message []byte) {
 		err := conn.WriteMessage(websocket.TextMessage, message)
 		if err != nil {
 			fmt.Println("Error broadcasting message to client", id, ":", err)
+			return err
 		}
 	}
+	return nil
 }
