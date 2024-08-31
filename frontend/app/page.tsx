@@ -33,7 +33,7 @@ export default function Home() {
     if (!s?.isAuthenticated) {
       sendCookie();
     }
-  }, []);
+  }, [s?.isAuthenticated]);
 
   if (!s?.isAuthenticated) return <div></div>;
   return (

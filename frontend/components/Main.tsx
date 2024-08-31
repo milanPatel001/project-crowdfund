@@ -11,10 +11,7 @@ export default function Main() {
   const [fundsData, setFundsData] = useState<FundsData>();
 
   const s = useSocket();
-  const toast_id = "success1";
-
- 
-
+   
   useEffect(() => {
     console.log("Inside Main: " + s?.isAuthenticated);
     if (s?.isAuthenticated && s?.socket) {

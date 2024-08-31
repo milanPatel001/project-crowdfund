@@ -23,8 +23,14 @@ export default function Navbar() {
       }
     );
 
-    if(res.ok) router.replace("/login");
-    else router.replace("/login");
+    if(res.ok) {
+      s?.socket?.close()
+      router.replace("/login");
+    }
+    else {
+      s?.socket?.close()
+      router.replace("/login");
+    }
   };
 
   return (
