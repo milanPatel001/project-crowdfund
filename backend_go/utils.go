@@ -32,7 +32,6 @@ func CheckPassword(hashedPassword, password string) error {
 
 func CreateJWTToken(userID int64, email string) (string, error) {
 	// Create the token claims
-	fmt.Print("\nInside CreatJWTToken method\n")
 	claims := jwt.MapClaims{
 		"userId": userID,
 		"email":  email,
@@ -97,7 +96,7 @@ func ValidateToken(tokenString string, tokenType string) error {
 
 	token, err := GetToken(tokenString, secret)
 	if err != nil {
-		fmt.Print("\nValidate Token: Token Invalid\n")
+		fmt.Print("\nToken Invalid\n")
 		return err
 	}
 
@@ -118,11 +117,7 @@ func ValidateToken(tokenString string, tokenType string) error {
 
 func GetClaims(token *jwt.Token) (int64, string) {
 
-	fmt.Print("\nInside GETCLAIMS\n")
 	claims := token.Claims.(jwt.MapClaims)
-
-	fmt.Print(claims)
-
 	return int64(claims["userId"].(float64)), claims["email"].(string)
 }
 
@@ -164,4 +159,13 @@ func GenerateCustomID() string {
 	currentTime := time.Now().UnixNano()
 	randomNumber, _ := rand.Int(rand.Reader, big.NewInt(100000))
 	return fmt.Sprintf("%d-%d", currentTime, randomNumber)
+}
+
+func generateOTP() string {
+
+	n, _ := rand.Int(rand.Reader, big.NewInt(9000))
+
+	otp := int(n.Int64()) + 1000
+	otpStr := fmt.Sprintf("%04d", otp)
+	return otpStr
 }

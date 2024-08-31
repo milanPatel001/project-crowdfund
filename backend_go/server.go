@@ -30,6 +30,12 @@ func main() {
 	GOOGLE_CLIENT_SECRET = os.Getenv("GOOGLE_CLIENT_SECRET")
 	REDIRECT_URI = os.Getenv("REDIRECT_URI")
 	STRIPE_SECRET_KEY = os.Getenv("STRIPE_SECRET_KEY")
+	SUCCESS_URL = os.Getenv("SUCCESS_URL")
+	ALLOWED_ORIGIN = os.Getenv("ALLOW")
+
+	if ALLOWED_ORIGIN == "" {
+		ALLOWED_ORIGIN = "https://*"
+	}
 
 	stripe.Key = STRIPE_SECRET_KEY
 
@@ -55,7 +61,7 @@ func main() {
 
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"http://localhost:3000"},
+		AllowedOrigins: []string{ALLOWED_ORIGIN},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
@@ -64,16 +70,20 @@ func main() {
 		MaxAge:           86400, // Maximum value not ignored by any of major browsers
 	}))
 
-	r.Post("/signup", router.SignUpHandler)
+	r.Post("/generateOtp", router.OTPHandler)
+	r.Post("/verifyOtp", router.SignUpHandler)
+
 	r.Post("/login", router.LogInHandler)
 	r.Post("/verifyToken", router.VerifyToken)
 	r.HandleFunc("/auth/google", router.GoogleLoginHandler)
 	r.HandleFunc("/auth/callback", router.GoogleCallbackHandler)
 	r.Post("/auth/redirect", router.RedirectHandler)
+	r.Get("/logout", router.LogOutHandler)
 
 	r.Get("/ws", router.WsHandler)
 
 	r.Get("/fundsData", router.FundsDataHandler)
+	r.Get("/history", router.HistoryHandler)
 
 	r.Post("/createCheckoutSession", router.CreateCheckoutSession)
 	r.HandleFunc("/webhook", router.StripeWebhookHandler)

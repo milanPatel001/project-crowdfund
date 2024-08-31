@@ -27,6 +27,14 @@ type RecentDonator struct {
 	Amount  int    `json:"amount"`
 }
 
+type History struct {
+	Id          int    `json:"id"`
+	Beneficiary string `json:"beneficiary"`
+	Organizer   string `json:"organizer"`
+	Amount      int    `json:"amount"`
+	DonatedAt   string `json:"donated_at"`
+}
+
 type FundData struct {
 	Id              int64           `json:"id"`
 	Name            string          `json:"name"`
@@ -71,7 +79,7 @@ func (db *Database) EmailExistsQuery(email string) (int64, error) {
 	return id, err
 }
 
-func (db *Database) SaveUserInfo(lname string, fname string, email string, password string, googleLogin bool) (int64, error) {
+func (db *Database) SaveUserInfo(lname string, fname string, email string, password string, googleLogin bool, isVerified bool) (int64, error) {
 
 	hashedPassword, err := HashPassword(password)
 
@@ -82,8 +90,8 @@ func (db *Database) SaveUserInfo(lname string, fname string, email string, passw
 	var id int64
 
 	err = db.pool.QueryRow(context.Background(),
-		"INSERT INTO users (fname, lname, email, hashed_password, google_login) VALUES ($1, $2, $3, $4, $5)",
-		fname, lname, email, hashedPassword, googleLogin).Scan(&id)
+		"INSERT INTO users (fname, lname, email, hashed_password, google_login, is_verified) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+		fname, lname, email, hashedPassword, googleLogin, isVerified).Scan(&id)
 
 	if err != nil {
 		return -1, fmt.Errorf("Insert failed: %s", err)
@@ -145,6 +153,34 @@ func (db *Database) GetFundsData() ([]FundData, error) {
 	}
 
 	//fmt.Println(data)
+
+	return data, nil
+}
+
+func (db *Database) GetUserHistory(userId int) ([]History, error) {
+	query := "SELECT id, amount, organizer, beneficiary, donated_at FROM history WHERE user_id = $1"
+
+	rows, err := db.pool.Query(context.Background(), query, userId)
+
+	if err != nil {
+		fmt.Println("Query failed:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	data := []History{}
+
+	for rows.Next() {
+
+		fd := History{}
+
+		if err := rows.Scan(&fd.Id, &fd.Amount, &fd.Organizer, &fd.Beneficiary, &fd.DonatedAt); err != nil {
+			fmt.Println("Failed to scan row:", err)
+			return nil, err
+		}
+
+		data = append(data, fd)
+	}
 
 	return data, nil
 }

@@ -20,9 +20,13 @@ var (
 	GOOGLE_CLIENT_SECRET string
 	REDIRECT_URI         string
 	STRIPE_SECRET_KEY    string
+	SUCCESS_URL          string
+	ALLOWED_ORIGIN       string
 	scopes               = "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email"
 	googleIdentifierMap  = make(map[string]int)
 	googleIdentifierLock = sync.Mutex{}
+	otpMap               = make(map[string]struct{ Fname, Lname, Password, Email, Otp string })
+	otpLock              = sync.Mutex{}
 )
 
 type Response struct {
@@ -31,8 +35,6 @@ type Response struct {
 }
 
 func (router *Router) VerifyToken(w http.ResponseWriter, r *http.Request) {
-
-	fmt.Println("\nInside Verify TOken\n")
 
 	// get both access and refresh token
 	accessTokenCookie, err := r.Cookie("access")
@@ -95,9 +97,9 @@ func (router *Router) VerifyToken(w http.ResponseWriter, r *http.Request) {
 			Value:    newJwtToken,
 			Path:     "/",
 			Expires:  time.Now().Add(15 * time.Minute),
-			MaxAge:   86400,
+			MaxAge:   900,
 			HttpOnly: true,
-			//Secure:   true,
+			Secure:   true,
 		})
 		w.Write([]byte(strconv.Itoa(int(userId))))
 
@@ -162,26 +164,24 @@ func (router *Router) LogInHandler(w http.ResponseWriter, r *http.Request) {
 		Value:    jwtToken,
 		Path:     "/",
 		Expires:  time.Now().Add(15 * time.Minute),
-		MaxAge:   86400,
+		MaxAge:   900,
 		HttpOnly: true,
-		//Secure:   true,
+		Secure:   true,
 	})
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh",
 		Value:    refreshToken,
 		Path:     "/",
-		Expires:  time.Now().Add(24 * 7 * time.Hour),
+		Expires:  time.Now().Add(24 * time.Hour),
 		MaxAge:   86400,
 		HttpOnly: true,
-		//Secure:   true,
+		Secure:   true,
 	})
 
 }
 
-func (router *Router) SignUpHandler(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", "application/json")
+func (router *Router) OTPHandler(w http.ResponseWriter, r *http.Request) {
 
 	sign := struct {
 		Fname    string `json:"fname"`
@@ -192,7 +192,7 @@ func (router *Router) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&sign); err != nil {
 		fmt.Print(err)
-		json.NewEncoder(w).Encode(Response{false, err.Error()})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer r.Body.Close()
@@ -201,26 +201,82 @@ func (router *Router) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		fmt.Print(err)
-		json.NewEncoder(w).Encode(Response{false, err.Error()})
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if id != 0 {
+	if id != 0 && id != -1 {
 		fmt.Print("Email already exists!!")
-		// If email exists and its a google login, Update the user with new password and remove the false error
-		json.NewEncoder(w).Encode(Response{false, "Email already exists"})
+		http.Error(w, "Email already exists!!", http.StatusBadRequest)
 		return
 	}
 
-	_, err = router.DB.SaveUserInfo(sign.Lname, sign.Fname, sign.Email, sign.Password, false)
+	otp := generateOTP()
+	fmt.Println("OTP: ", otp)
+
+	func() {
+		otpLock.Lock()
+
+		otpMap[sign.Email] = struct {
+			Fname    string
+			Lname    string
+			Password string
+			Email    string
+			Otp      string
+		}{sign.Fname, sign.Lname, sign.Password, sign.Email, otp}
+
+		defer otpLock.Unlock()
+	}()
+
+	w.WriteHeader(http.StatusOK)
+
+}
+
+func (router *Router) SignUpHandler(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	body := struct {
+		Email string `json:"email"`
+		Otp   string `json:"otp"`
+	}{}
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		fmt.Print(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	info, exists := otpMap[body.Email]
+
+	if !exists {
+		fmt.Print("Somehow you bypassed the otp flow. Halt!!!")
+		http.Error(w, "Somehow you bypassed the otp flow. Halt!!!", http.StatusBadRequest)
+		return
+	}
+
+	if body.Otp != info.Otp {
+		fmt.Print("Otp doesnt match!!")
+		http.Error(w, "Otp doesnt match!!", http.StatusBadRequest)
+		return
+	}
+
+	_, err := router.DB.SaveUserInfo(info.Lname, info.Fname, info.Email, info.Password, false, true)
 
 	if err != nil {
 		fmt.Print(err)
-		json.NewEncoder(w).Encode(Response{false, "Not able to save in Database right now!!"})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(Response{true, ""})
+	func() {
+		otpLock.Lock()
+		delete(otpMap, body.Email)
+		defer otpLock.Unlock()
+	}()
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (router *Router) FundsDataHandler(w http.ResponseWriter, r *http.Request) {
@@ -233,6 +289,20 @@ func (router *Router) FundsDataHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(fundsData)
 
+}
+
+func (router *Router) HistoryHandler(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	id, _ := strconv.Atoi(q.Get("id"))
+	data, err := router.DB.GetUserHistory(id)
+
+	if err != nil {
+		fmt.Println("Can't fetch history")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
 }
 
 func (router *Router) CreateCheckoutSession(w http.ResponseWriter, r *http.Request) {
@@ -268,7 +338,7 @@ func (router *Router) CreateCheckoutSession(w http.ResponseWriter, r *http.Reque
 	metaDataMap["comment"] = body.Comment
 
 	params := &stripe.CheckoutSessionParams{
-		SuccessURL:         stripe.String("http://localhost:3000"),
+		SuccessURL:         stripe.String(SUCCESS_URL),
 		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
 
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
@@ -341,13 +411,18 @@ func (router *Router) StripeWebhookHandler(w http.ResponseWriter, r *http.Reques
 		}
 
 		amount, _ := strconv.Atoi(session.Metadata["amount"])
-		paymentCompletedMap[session.Metadata["userId"]] = Donator{
-			session.Metadata["fundId"],
-			amount,
-			session.Metadata["beneficiary"],
-			session.Metadata["donator"],
-			session.Metadata["comment"],
-		}
+
+		func() {
+			lock.Lock()
+			paymentCompletedMap[session.Metadata["userId"]] = Donator{
+				session.Metadata["fundId"],
+				amount,
+				session.Metadata["beneficiary"],
+				session.Metadata["donator"],
+				session.Metadata["comment"],
+			}
+			defer lock.Unlock()
+		}()
 
 		// broadcast fundId, userId, amount, donator, comment
 		m := Message[Donator]{
@@ -440,9 +515,10 @@ func (router *Router) GoogleCallbackHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if id == 0 {
+	if id == 0 || id == -1 {
 		// generate a hard,random password
-		id, err = router.DB.SaveUserInfo(lname, fname, email, "pop", true)
+		pswd := GenerateCustomID()
+		id, err = router.DB.SaveUserInfo(lname, fname, email, pswd, true, false)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -458,10 +534,7 @@ func (router *Router) GoogleCallbackHandler(w http.ResponseWriter, r *http.Reque
 		defer googleIdentifierLock.Unlock()
 	}()
 
-	//frontendURL := fmt.Sprintf("http://localhost:3000/login")
-	frontendURL := fmt.Sprintf("http://localhost:3000/login?id=%v&email=%s&session=%s", id, email, googleLoginIdentifier)
-
-	//add google login identifier to frontendURl to prevent login hacks
+	frontendURL := fmt.Sprintf("%s/login?id=%v&email=%s&session=%s", SUCCESS_URL, id, email, googleLoginIdentifier)
 
 	// Return HTML with script to replace the current window location
 	html := fmt.Sprintf(`
@@ -525,19 +598,43 @@ func (router *Router) RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		Value:    jwtToken,
 		Path:     "/",
 		Expires:  time.Now().Add(15 * time.Minute),
-		MaxAge:   86400,
+		MaxAge:   900,
 		HttpOnly: true,
-		//Secure:   true,
+		Secure:   true,
 	})
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh",
 		Value:    refreshToken,
 		Path:     "/",
-		Expires:  time.Now().Add(24 * 7 * time.Hour),
+		Expires:  time.Now().Add(24 * time.Hour),
 		MaxAge:   86400,
 		HttpOnly: true,
-		//Secure:   true,
+		Secure:   true,
 	})
 
+}
+
+func (router *Router) LogOutHandler(w http.ResponseWriter, r *http.Request) {
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access",
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Unix(0, 0), // Set the cookie expiration to the past
+		MaxAge:   -1,
+		HttpOnly: true,
+	})
+
+	// Clear the refresh token cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh",
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+		HttpOnly: true,
+	})
+
+	w.WriteHeader(http.StatusOK)
 }
