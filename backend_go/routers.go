@@ -54,10 +54,10 @@ func VerifyToken(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
-			fmt.Println("Access token cookie not found:")
-			http.Error(w, "Access token cookie not found", http.StatusBadRequest)
+			fmt.Println("Refresh token cookie not found:")
+			http.Error(w, "Refresh token cookie not found", http.StatusBadRequest)
 		} else {
-			fmt.Println("Error retrieving access token cookie:", err)
+			fmt.Println("Error retrieving refresh token cookie:", err)
 			http.Error(w, "Server error", http.StatusInternalServerError)
 		}
 		return
