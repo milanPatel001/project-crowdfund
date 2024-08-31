@@ -43,8 +43,6 @@ var (
 
 func (router *Router) WsHandler(w http.ResponseWriter, r *http.Request) {
 
-	//paymentCompletedMap["6"] = Donator{"3", 69, "OOPZ", "PP", "ss"}
-
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("Failed to upgrade to WebSocket:", err)
@@ -72,11 +70,13 @@ func (router *Router) WsHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Read error:", err)
 			break
 		}
-		fmt.Printf("Received msg from: %s\n", clientID)
 
 		msg := Message[Content]{}
 
 		_ = json.Unmarshal(message, &msg)
+
+		fmt.Printf("Received msg from: %s\n", clientID)
+		fmt.Println(msg)
 
 		//one event for checking ids in donated map on startup
 		switch msg.Event {
@@ -95,12 +95,10 @@ func (router *Router) WsHandler(w http.ResponseWriter, r *http.Request) {
 			res, _ := json.Marshal(m)
 
 			SendMessageToClient(clientID, res)
-			break
 		case "removePaymentCheck":
 			lock.Lock()
 			delete(paymentCompletedMap, msg.Content.UserId)
 			defer lock.Unlock()
-			break
 		case "removeIdentifier":
 			lock.Lock()
 			// here, userId is sessionId

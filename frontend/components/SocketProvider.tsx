@@ -67,6 +67,7 @@ export const SocketProvider : React.FC<SocketProviderProps> = ({ children }) => 
       
       if (tempId.current !== ""){
         s.send(JSON.stringify({event: "removeIdentifier", message: "Remove Temp Id!!", content: {userId: tempId.current}}));
+        setTempId("")
       }
     
     };
