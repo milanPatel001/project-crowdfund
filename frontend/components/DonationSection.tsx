@@ -1,15 +1,20 @@
 import Image from "next/image";
 import { CurrencyDollarIcon, UserIcon } from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useSocket } from "./SocketProvider";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { loadStripe } from "@stripe/stripe-js";
+//import { loadStripe } from "@stripe/stripe-js";
 import "react-toastify/dist/ReactToastify.css";
+import { FundData } from "@/backend";
 
-const stripePromise = loadStripe(`${process.env.STRIPE_PUBLIC_KEY}`);
 
-export default function DonationSection() {
+type DonationProps = {
+  title: string,
+  beneficiary: string
+}
+
+export default function DonationSection({title, beneficiary} : DonationProps) {
   const [tipButton, setTipButton] = useState(0);
   const [tipAmount, setTipAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(5);
@@ -19,20 +24,13 @@ export default function DonationSection() {
   const [donationInput, setDonationInput] = useState("5");
   const [name, setName] = useState("Anonymous");
   const [comment, setComment] = useState("");
-  const [fundData, setFundData] = useState({});
+  //const [fundData, setFundData] = useState<FundData>()
 
-  const { socket, isAuthenticated, userId, setData } = useSocket();
+  const s = useSocket();
   const params = useParams();
   const router = useRouter();
 
-  useEffect(() => {
-    socket?.emit("specific fund request", Number(params.fundId));
-    socket?.on("specific fund response", (fund) => {
-      setFundData(fund);
-    });
-  }, [isAuthenticated]);
-
-  const handleTipChange = (percent) => {
+  const handleTipChange = (percent : number) => {
     const amt = (Number(donationInput) * percent) / 100;
 
     setTipAmount(amt);
@@ -40,7 +38,7 @@ export default function DonationSection() {
     setTotalAmount(Math.ceil(amt + Number(donationInput)));
   };
 
-  const handleActiveTip = (percent) => {
+  const handleActiveTip = (percent : number) => {
     let tipCss =
       "rounded-xl px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-500 hover:bg-green-300 hover:text-blue-700 ";
 
@@ -51,7 +49,7 @@ export default function DonationSection() {
     return tipCss;
   };
 
-  const handleDonationInput = (e) => {
+  const handleDonationInput = (e : ChangeEvent<HTMLInputElement>) => {
     const re = /^[0-9\b]+$/;
 
     // if value is not blank, then test the regex
@@ -62,27 +60,26 @@ export default function DonationSection() {
         setTipAmount(0);
         setTotalAmount(0);
       } else {
-        setTipAmount((e.target.value * tipButton) / 100);
+        setTipAmount((Number(e.target.value) * tipButton) / 100);
         setTotalAmount(
-          Math.ceil((e.target.value * tipButton) / 100) + Number(e.target.value)
+          Math.ceil((Number(e.target.value) * tipButton) / 100) + Number(e.target.value)
         );
       }
     }
   };
 
-  const createCheckoutSession = async (data) => {
-    const stripe = await stripePromise;
+  const createCheckoutSession = async (data : any) => {
+    //const stripe = await stripePromise;
 
     try {
       const res = await fetch(
         process.env.NEXT_PUBLIC_SERVER_URL + "/createCheckoutSession",
         {
-          url: process.env.NEXT_PUBLIC_SERVER_URL + "/createCheckoutSession",
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+          // headers: {
+          //   // "Content-Type": "application/json",
+          //   // Accept: "application/json",
+          // },
           body: JSON.stringify(data),
           cache: "no-store",
         }
@@ -99,8 +96,10 @@ export default function DonationSection() {
       }
 
       res
-        .json()
-        .then((checkoutSession) => router.push(checkoutSession.url))
+        .text()
+        .then((url) => {
+          router.push(url)
+        })
         .catch((ex) => console.warn(ex));
     } catch (ex) {
       console.warn(ex);
@@ -123,28 +122,29 @@ export default function DonationSection() {
 
       toast.clearWaitingQueue();
     } else {
-      const commentObj = {
-        donator: name,
-        amount: totalAmount,
-        comment: comment,
-      };
 
+      if(!s?.fundIdMap.current.has(Number(params.fundId))){
+        router.replace("/")
+      }
+
+      const index = s?.fundIdMap.current.get(Number(params.fundId));
+      const fundData = s?.fundsData[index]
+       
+      
       const data = {
         fundId: params.fundId,
         amount: totalAmount,
         donator: name,
-        comment: commentObj,
-        user_id: userId,
-        organizer: fundData.name,
-        beneficiary: fundData.beneficiary_name,
-        socketId: socket.id,
+        comment: comment,
+        userId: s?.userId,
+        organizer: fundData?.name,
+        beneficiary: fundData?.beneficiary_name,
+        //socketId: socket.id,
       };
+
 
       await createCheckoutSession(data);
 
-      //After stripe confirms data
-      //socket.emit("donate", data);
-      //router.push(`/${params.fundId}`);
     }
   };
 
@@ -157,12 +157,12 @@ export default function DonationSection() {
         <div className="flex flex-col ml-4">
           <p>
             You're supporting{" "}
-            <span className=" font-bold"> {fundData.title} </span>{" "}
+            <span className=" font-bold"> {title} </span>{" "}
           </p>
           <p className=" text-gray-400 font-normal">
             Your donation will benefit{" "}
             <span className="font-bold text-gray-600">
-              {fundData.beneficiary_name}
+              {beneficiary}
             </span>
           </p>
         </div>
@@ -267,9 +267,7 @@ export default function DonationSection() {
       >
         Show some words of support
       </label>
-      <textarea
-        id="message"
-        rows="4"
+      <textarea id="message" rows={4} 
         className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none"
         placeholder="Write your thoughts here..."
         value={comment}

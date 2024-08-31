@@ -1,25 +1,41 @@
 "use client";
+import { History as Hist } from "@/backend";
 import Navbar from "@/components/Navbar";
 import { useSocket } from "@/components/SocketProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function History() {
-  const { socket, isAuthenticated, userId } = useSocket();
+  const auth = useSocket();
   const router = useRouter();
 
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState<Hist[]>([]);
+
+  const fetchHistory = async ()=>{
+    const res = await fetch(
+      process.env.NEXT_PUBLIC_SERVER_URL + "/history?id=" + auth?.userId,
+      {
+        method: "GET",
+        credentials: "include",
+      }
+    );
+
+    if(res.ok){
+      const result : Hist[] = await res.json();
+      console.log(result)
+      setHistory(result)
+
+    }else{
+      console.warn("Couldn't load!!")
+    }
+  }
 
   useEffect(() => {
-    if (!isAuthenticated) router.push("/login");
+    if (!auth?.isAuthenticated) router.push("/");
     else {
-      socket?.emit("history", userId);
-      socket?.on("historyClient", (hist) => {
-        console.log(hist);
-        setHistory(hist);
-      });
+      fetchHistory()
     }
-  }, [isAuthenticated]);
+  }, [auth?.isAuthenticated]);
 
   return (
     <div className="flex flex-col gap-2 h-screen bg-white">
@@ -37,6 +53,7 @@ export default function History() {
             className="flex gap-3 w-full border-b border-gray-400 p-2"
             key={i}
           >
+            
             <p className="w-1/12 text-center">{i + 1}.</p>
             <p className="w-3/12 text-center">{row.organizer}</p>
             <p className="w-3/12 text-center">{row.beneficiary}</p>

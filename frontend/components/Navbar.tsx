@@ -7,16 +7,24 @@ import {
 } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useSocket } from "./SocketProvider";
-import { deleteCookie } from "cookies-next";
 
 export default function Navbar() {
   const router = useRouter();
-  const { logout } = useSocket();
+  const s = useSocket();
 
-  const handleLogout = () => {
-    deleteCookie("token");
-    logout();
-    router.replace("/login");
+  const handleLogout = async () => {
+    s?.logout();
+
+    const res = await fetch(
+      process.env.NEXT_PUBLIC_SERVER_URL + "/logout",
+      {
+        method: "GET",
+        credentials: "include",
+      }
+    );
+
+    if(res.ok) router.replace("/login");
+    else router.replace("/login");
   };
 
   return (
@@ -47,7 +55,7 @@ export default function Navbar() {
 
           <div
             className="flex items-center gap-2 p-1 px-2 rounded-xl text-black text-xl select-none hover:bg-pink-500 hover:font-bold hover:text-white cursor-pointer"
-            onClick={() => router.push("/form")}
+            //onClick={() => router.push("/form")}
           >
             <PlusCircleIcon className="w-7 h-7" />
             Start a fundraiser

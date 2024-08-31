@@ -2,8 +2,13 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSocket } from "./SocketProvider";
+import { FundData } from "@/backend";
 
-export default function Card({ fund }) {
+type FundProps = {
+  fund: FundData
+}
+
+export default function Card({ fund } : FundProps) {
   const router = useRouter();
   const [progress, setProgress] = useState(0);
 

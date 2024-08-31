@@ -1,13 +1,21 @@
 import { useEffect, useState } from "react";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { useParams, useRouter } from "next/navigation";
+import { FundData } from "@/backend";
+
+type RightSectionProps = {
+  openLeaderBoard: ()=>void,
+  openSeeAllModal: ()=>void,
+  openShareModal: ()=>void,
+  fundData: FundData
+}
 
 export default function RightSection({
-  openisleaderBoard,
+  openLeaderBoard,
   openSeeAllModal,
   openShareModal,
   fundData,
-}) {
+} : RightSectionProps) {
   const router = useRouter();
   const params = useParams();
   const [progress, setProgress] = useState(0);
@@ -16,7 +24,7 @@ export default function RightSection({
     let percent = (fundData.total_donation * 100) / fundData.goal;
     if (percent > 100) percent = 100;
     setProgress(percent);
-  }, [fundData.total_donation]);
+  }, [fundData, fundData.total_donation]);
 
   return (
     <div className="flex flex-col gap-2 m-4 mt-16 shadow-xl border border-t-1 border-gray-300 rounded-2xl p-4 sticky top-24">
@@ -38,7 +46,7 @@ export default function RightSection({
       </p>
       <button
         className="py-3 mx-6 bg-yellow-400 rounded-xl font-semibold hover:bg-yellow-300"
-        onClick={() => router.push(`/${params.fundId}/donation`)}
+        onClick={() => router.push(`/${params.fundId}/donation/?title=${fundData.title}&ben=${fundData.beneficiary_name}`)}
       >
         Donate Now
       </button>
@@ -58,8 +66,8 @@ export default function RightSection({
 
       {/* Recent Donations - max 3 on display*/}
       <div className="flex flex-col gap-5">
-        {fundData?.recentdonators?.slice(0, 4).map((p) => (
-          <div key={p.amount} className="flex flex-row gap-2">
+        {fundData?.recentdonators?.slice(0, 4).map((p, i) => (
+          <div key={i} className="flex flex-row gap-2">
             <img
               width={40}
               height={40}
@@ -83,7 +91,7 @@ export default function RightSection({
           See all
         </button>
         <button
-          onClick={() => openisleaderBoard()}
+          onClick={() => openLeaderBoard()}
           className="bg-green-700 text-white font-semibold rounded-xl px-3 py-2 ml-3 hover:bg-green-600"
         >
           $ See Top Donations $

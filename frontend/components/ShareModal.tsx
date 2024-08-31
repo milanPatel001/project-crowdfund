@@ -1,3 +1,4 @@
+import { FundData } from "@/backend";
 import { XCircleIcon } from "@heroicons/react/24/outline";
 import {
   EmailIcon,
@@ -16,7 +17,13 @@ import {
   WhatsappShareButton,
 } from "react-share";
 
-export default function ShareModal({ isOpen, onClose, fundData }) {
+type ShareProps = {
+  isOpen: boolean,
+  onClose: ()=> void,
+  //fundData : FundData   
+}
+
+export default function ShareModal({ isOpen, onClose } : ShareProps) {
   const url = "http://localhost:3000/1";
   if (!isOpen) return null;
 
@@ -59,7 +66,7 @@ export default function ShareModal({ isOpen, onClose, fundData }) {
               <FacebookIcon round={true} />
             </FacebookShareButton>
 
-            <FacebookMessengerShareButton url={url}>
+            <FacebookMessengerShareButton appId="" url={url}>
               <FacebookMessengerIcon round={true} />
             </FacebookMessengerShareButton>
 
@@ -77,7 +84,7 @@ export default function ShareModal({ isOpen, onClose, fundData }) {
               <WhatsappIcon round={true} />
             </WhatsappShareButton>
 
-            <PinterestShareButton url={url}>
+            <PinterestShareButton media="" url={url}>
               <PinterestIcon round={true} />
             </PinterestShareButton>
           </div>

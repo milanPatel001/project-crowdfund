@@ -1,86 +1,66 @@
 "use client";
 
-import { useSocket } from "@/components/SocketProvider";
+import { SignUpResponse } from "@/backend";
+import { setToastParam } from "@/utils";
 import LockClosedIcon from "@heroicons/react/24/outline/LockClosedIcon";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { setCookie } from "cookies-next";
+import { FormEvent, useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function SignUp() {
   const router = useRouter();
 
-  const [fname, setFname] = useState("");
-  const [lname, setLname] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [fname, setFname] = useState<string>("");
+  const [lname, setLname] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
 
-  const handleSubmission = async (e) => {
-    e.preventDefault();
+  const handleSubmission = async (e : FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      let errors = [];
 
-    try {
-      const form = {
-        lname,
-        fname,
-        email,
-        password,
-      };
-
-      const res = await fetch(process.env.NEXT_PUBLIC_SERVER_URL + "/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(form),
-        cache: "no-store",
-      });
-
-      const result = await res.json();
-
-      if (result.passed) {
-        toast.success("Account Created", {
-          position: "top-center",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "colored",
-        });
-        router.replace("/login");
-      } else {
-        toast.error("Something went wrong!!!", {
-          position: "top-center",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "colored",
-        });
+      if (fname=="") errors.push("First Name");
+      if (email=="") errors.push("Email");
+      if (password=="") errors.push("Password");
+  
+      if (errors.length > 0) {
+        toast.error(errors.join(", ")+"  required!!", setToastParam(2000, "top-center"));
+        return
       }
-    } catch (ex) {
-      toast.warn("Server not connected!!", {
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
-    }
+
+      const form = { lname, fname, email, password };
+
+      try{
+        const res = await fetch(process.env.NEXT_PUBLIC_SERVER_URL + "/generateOtp", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(form),
+          cache: "no-store",
+        });
+  
+        //const result : SignUpResponse = await res.json();
+  
+        if (res.ok) {
+          router.push(`/signup/otp?email=${email}`);
+        } else if(res.status==400 || res.status==404){
+          toast.error("Email already exists!!", setToastParam(2000, "top-center"));
+        }else{
+          toast.warn("Problem with server. Try again after few mintues!!", setToastParam(2000, "top-center"));
+        }
+      }catch(ex){
+        toast.warn("Problem with server. Try again after few mintues!!", setToastParam(2000, "top-center"));
+      }
+    
   };
 
   return (
     <div className="w-screen h-screen lg:bg-gray-100">
       <div className="border"></div>
-      <div className="lg:w-1/3 mx-auto rounded-xl lg:shadow-xl p-10 bg-white lg:mt-12">
+      <div className="lg:w-1/3 md:w-3/5 mx-auto rounded-xl lg:shadow-xl p-10 bg-white lg:mt-12">
         <div className="mt-3 flex items-center gap-3">
           <img
             width={100}
@@ -180,6 +160,13 @@ export default function SignUp() {
             Sign Up
           </button>
         </form>
+        <div className="flex items-center">
+            <div
+                className="p-3 px-6 rounded-xl mx-auto mt-4 font-medium"
+              >
+                Have an account? <span onClick={()=>router.push("/login")} className=" text-blue-500 hover:cursor-pointer hover:text-blue-800">Log In</span>
+            </div>
+        </div>
       </div>
     </div>
   );

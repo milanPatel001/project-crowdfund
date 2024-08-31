@@ -1,6 +1,13 @@
+import { FundData } from "@/backend";
 import { XCircleIcon } from "@heroicons/react/24/outline";
 
-export default function LeaderBoard({ isOpen, onClose, fundData }) {
+type LeaderBoardProps = {
+  isOpen: boolean
+  onClose: ()=>void
+  fundData: FundData
+}
+export default function LeaderBoard({ isOpen, onClose, fundData } : LeaderBoardProps) {
+
   if (!isOpen) return null;
 
   return (
@@ -28,7 +35,7 @@ export default function LeaderBoard({ isOpen, onClose, fundData }) {
         </div>
 
         <div className="p-4 overflow-auto flex flex-col gap-3">
-          {fundData?.leaderboard.map((d, index) => (
+          {fundData?.recentdonators.toSorted((a,b)=>b.amount - a.amount).map((d, index) => (
             <div className="flex flex-row gap-4 items-center" key={index}>
               <img
                 width={70}

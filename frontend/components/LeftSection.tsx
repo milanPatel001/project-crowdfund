@@ -3,8 +3,12 @@ import React, { useState } from "react";
 import { ClockIcon } from "@heroicons/react/24/outline";
 
 import { HeartIcon } from "@heroicons/react/24/solid";
+import { FundData } from "@/backend";
 
-export default function LeftSection({ fundData }) {
+
+type FundProps = {fundData: FundData}
+
+export default function LeftSection({ fundData } : FundProps) {
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mt-3">
       <h1 className="text-3xl font-semibold mb-4">{fundData.title}</h1>
@@ -70,13 +74,13 @@ export default function LeftSection({ fundData }) {
             height={40}
             src={
               "https://api.dicebear.com/6.x/bottts/svg?seed=" +
-              fundData.beneficiaryName
+              fundData.beneficiary_name
             }
             alt="avt"
             loading="lazy"
           />
           <div className="flex flex-col">
-            <p className="font-semibold">{fundData.beneficiaryName}</p>
+            <p className="font-semibold">{fundData.beneficiary_name}</p>
             <p className="font-light text-sm">Beneficiary</p>
             <p className="font-light text-sm">{fundData.place}</p>
           </div>
@@ -92,8 +96,8 @@ export default function LeftSection({ fundData }) {
 
       <div className="mt-5 flex flex-col gap-2">
         {fundData?.comments?.map((c, i) => (
-          <>
-            <div key={i} className="mb-2 flex gap-3 p-2">
+          <div key={c.id}>
+            <div className="mb-2 flex gap-3 p-2">
               <HeartIcon className="w-8 h-8 text-red-500" />
               <div className="flex flex-col">
                 <p className="font-semibold">{c.donator}</p>
@@ -102,7 +106,7 @@ export default function LeftSection({ fundData }) {
               </div>
             </div>
             <div className="border border-gray-100 mx-2 mb-2"></div>
-          </>
+          </div>
         ))}
       </div>
     </div>
