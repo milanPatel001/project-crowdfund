@@ -41,32 +41,13 @@ export default function Login() {
     });
 
     if (res.ok) {
-        sendCookie();
+      router.replace("/");
     }else{
       toast.error("Problem with redirect!!", setToastParam(4000, "top-center"));
     }
   }
 
-  const sendCookie = async () => {
-    const res = await fetch(
-      process.env.NEXT_PUBLIC_SERVER_URL + "/verifyToken",
-      {
-        method: "POST",
-        credentials: "include",
-      }
-    );
-
-    if (res.ok) {
-      const id = await res.text()
-      
-      auth?.setId(id);
-      auth?.login();
-      router.replace("/");
-    } else{
-      toast.error("Problem with cookies!!", setToastParam(4000, "top-center"));
-    }
-  };
-
+  
   const handleSubmission = async (e : FormEvent<HTMLFormElement>)  => {
       e.preventDefault();
 
@@ -91,7 +72,8 @@ export default function Login() {
   
   
         if (res.ok) {
-            sendCookie()
+            //sendCookie()
+            router.replace("/");
         }else if(res.status==400){
           toast.error("Invalid Email or Password!!", setToastParam(4000, "top-center"));
         }else {

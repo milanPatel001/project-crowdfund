@@ -67,6 +67,7 @@ export interface SocketContextType {
     fundsData: FundsData,
     setData: (FundsData)=>void,
     fundIdMap: MutableRefObject<Map<number, number>>,
-    setTempId: (string)=>void
+    setTempId: (string)=>void,
+    sendCookie: ()=>Promise<boolean>
   }
   

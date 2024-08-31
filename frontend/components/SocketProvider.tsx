@@ -44,6 +44,30 @@ export const SocketProvider : React.FC<SocketProviderProps> = ({ children }) => 
     tempId.current = id
   }
 
+  const sendCookie = async (): Promise<boolean> => {
+    try {
+      const res = await fetch(
+        process.env.NEXT_PUBLIC_SERVER_URL + "/verifyToken",
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+  
+      if (res.ok) {
+        const id = await res.text();
+        setId(id);
+        login();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      console.error("Error sending cookie:", error);
+      return false;
+    }
+  };
+
   const fetchFundsData = async () => {
     const res = await fetch(process.env.NEXT_PUBLIC_SERVER_URL + "/fundsData",{ method: "GET" }); //credentials: "include" });
 
@@ -151,7 +175,6 @@ export const SocketProvider : React.FC<SocketProviderProps> = ({ children }) => 
 
   useEffect(() => {
     if (isAuthenticated) {
-
       if(!loaded){
         fetchFundsData()
       }else{
@@ -174,7 +197,8 @@ export const SocketProvider : React.FC<SocketProviderProps> = ({ children }) => 
         fundsData,
         setData,
         fundIdMap,
-        setTempId
+        setTempId,
+        sendCookie
       }}
     >
       {children}

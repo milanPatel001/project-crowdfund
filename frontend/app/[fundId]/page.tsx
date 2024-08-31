@@ -2,7 +2,7 @@
 import LeftSection from "@/components/LeftSection";
 import RightSection from "@/components/RightSection";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import SeeAllModal from "@/components/SeeAllModal";
 import LeaderBoard from "@/components/LeaderBoard";
 import { useSocket } from "@/components/SocketProvider";
@@ -20,7 +20,7 @@ export default function FundPage() {
   const router = useRouter();
 
   const toast_id1 = "success2";
-
+  const hasRun = useRef<boolean>(false);
   const [isSeeAllModalOpen, setIsSeeAllModalOpen] = useState(false);
   const [isleaderBoardOpen, setLeaderBoardOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -64,23 +64,7 @@ export default function FundPage() {
     setLeaderBoardOpen(false);
   };
 
-  const sendCookie = async () => {
-    const res = await fetch(
-      process.env.NEXT_PUBLIC_SERVER_URL + "/verifyToken",
-      {
-        method: "POST",
-        credentials: "include"
-      }
-    );
-
-    if (res.ok) {
-      const id = await res.text()
-
-      s?.setId(id);
-      s?.login();
-    } else router.replace("/login");
-  };
-
+  
   useEffect(() => {
     if (s?.isAuthenticated) {
 
@@ -94,7 +78,16 @@ export default function FundPage() {
         setFundData(s.fundsData[index])
       }
     } else {
-        sendCookie();
+
+        if(!hasRun.current){
+          hasRun.current = true
+          s?.sendCookie().then(completed=> {
+            if(!completed){
+                router.replace("/login")
+            }
+            hasRun.current = false
+          })
+      }
     }
   }, [s?.isAuthenticated, s?.fundsData]);
 

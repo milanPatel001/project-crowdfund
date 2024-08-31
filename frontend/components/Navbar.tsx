@@ -13,8 +13,7 @@ export default function Navbar() {
   const s = useSocket();
 
   const handleLogout = async () => {
-    s?.logout();
-
+ 
     const res = await fetch(
       process.env.NEXT_PUBLIC_SERVER_URL + "/logout",
       {
@@ -31,6 +30,8 @@ export default function Navbar() {
       s?.socket?.close()
       router.replace("/login");
     }
+
+    s?.logout();
   };
 
   return (

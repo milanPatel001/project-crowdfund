@@ -17,7 +17,7 @@ export default function Main() {
     if (s?.isAuthenticated && s?.socket) {
         setFundsData(s.fundsData)
     }
-  }, [s?.socket, s?.fundsData]);
+  }, [s?.socket, s?.isAuthenticated, s?.fundsData]);
 
   return (
     <div className="flex flex-col p-2 items-center bg-gray-50">
