@@ -4,7 +4,7 @@ import Main from "@/components/Main";
 import Navbar from "@/components/Navbar";
 import { useSocket } from "@/components/SocketProvider";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function Home() {
   const s = useSocket();
@@ -33,7 +33,7 @@ export default function Home() {
     if (!s?.isAuthenticated) {
       sendCookie();
     }
-  }, [s?.isAuthenticated]);
+  }, []);
 
   if (!s?.isAuthenticated) return <div></div>;
   return (
