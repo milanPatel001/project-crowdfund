@@ -1,6 +1,13 @@
-import { UserCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
+import { FundData } from "@/backend";
+import { XCircleIcon } from "@heroicons/react/24/outline";
 
-export default function SeeAllModal({ isOpen, onClose, fundData }) {
+type SeeAllProps = {
+  isOpen: boolean
+  onClose: ()=>void
+  fundData: FundData
+}
+
+export default function SeeAllModal({ isOpen, onClose, fundData } : SeeAllProps) {
   if (!isOpen) return null;
 
   return (
