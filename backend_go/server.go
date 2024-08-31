@@ -61,7 +61,7 @@ func main() {
 
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{ALLOWED_ORIGIN},
+		AllowedOrigins: []string{ALLOWED_ORIGIN, "http://localhost:3000"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
@@ -74,18 +74,18 @@ func main() {
 	r.Post("/verifyOtp", router.SignUpHandler)
 
 	r.Post("/login", router.LogInHandler)
-	r.Post("/verifyToken", router.VerifyToken)
-	r.HandleFunc("/auth/google", router.GoogleLoginHandler)
+	r.Post("/verifyToken", VerifyToken)
+	r.HandleFunc("/auth/google", GoogleLoginHandler)
 	r.HandleFunc("/auth/callback", router.GoogleCallbackHandler)
-	r.Post("/auth/redirect", router.RedirectHandler)
-	r.Get("/logout", router.LogOutHandler)
+	r.Post("/auth/redirect", RedirectHandler)
+	r.Get("/logout", LogOutHandler)
 
 	r.Get("/ws", router.WsHandler)
 
 	r.Get("/fundsData", router.FundsDataHandler)
 	r.Get("/history", router.HistoryHandler)
 
-	r.Post("/createCheckoutSession", router.CreateCheckoutSession)
+	r.Post("/createCheckoutSession", CreateCheckoutSession)
 	r.HandleFunc("/webhook", router.StripeWebhookHandler)
 
 	fmt.Println("Server starting on port ", port)

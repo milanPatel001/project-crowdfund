@@ -34,7 +34,7 @@ type Response struct {
 	Message string `json:"message"`
 }
 
-func (router *Router) VerifyToken(w http.ResponseWriter, r *http.Request) {
+func VerifyToken(w http.ResponseWriter, r *http.Request) {
 
 	// get both access and refresh token
 	accessTokenCookie, err := r.Cookie("access")
@@ -308,7 +308,7 @@ func (router *Router) HistoryHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(data)
 }
 
-func (router *Router) CreateCheckoutSession(w http.ResponseWriter, r *http.Request) {
+func CreateCheckoutSession(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("Inside Create Checkout Session")
 
@@ -446,7 +446,7 @@ func (router *Router) StripeWebhookHandler(w http.ResponseWriter, r *http.Reques
 
 }
 
-func (router *Router) GoogleLoginHandler(w http.ResponseWriter, r *http.Request) {
+func GoogleLoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Build the URL to redirect to Google's OAuth2 authorization endpoint
 	authURL := fmt.Sprintf("https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&response_type=code&scope=%s",
 		url.QueryEscape(GOOGLE_CLIENT_ID), url.QueryEscape(REDIRECT_URI), url.QueryEscape(scopes))
@@ -556,7 +556,7 @@ func (router *Router) GoogleCallbackHandler(w http.ResponseWriter, r *http.Reque
 
 }
 
-func (router *Router) RedirectHandler(w http.ResponseWriter, r *http.Request) {
+func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 
 	body := struct {
 		Id        int64  `json:"id"`
@@ -620,7 +620,7 @@ func (router *Router) RedirectHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (router *Router) LogOutHandler(w http.ResponseWriter, r *http.Request) {
+func LogOutHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "access",
