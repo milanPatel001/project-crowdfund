@@ -32,6 +32,7 @@ var (
 	paymentCompletedMap = make(map[string]Donator)
 	clients             = make(map[string]*websocket.Conn)
 	lock                = sync.Mutex{}
+	mapLock             = sync.Mutex{}
 
 	upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -96,14 +97,14 @@ func (router *Router) WsHandler(w http.ResponseWriter, r *http.Request) {
 
 			SendMessageToClient(clientID, res)
 		case "removePaymentCheck":
-			lock.Lock()
+			mapLock.Lock()
 			delete(paymentCompletedMap, msg.Content.UserId)
-			defer lock.Unlock()
+			mapLock.Unlock()
 		case "removeIdentifier":
-			lock.Lock()
+			mapLock.Lock()
 			// here, userId is sessionId
 			delete(googleIdentifierMap, msg.Content.UserId)
-			defer lock.Unlock()
+			mapLock.Unlock()
 		default:
 			res, _ := json.Marshal(Message[[]byte]{"def", []byte("Freee!!!"), "Ting!!"})
 			SendMessageToClient(clientID, res)
