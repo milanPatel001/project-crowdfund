@@ -629,6 +629,8 @@ func (router *Router) LogOutHandler(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Unix(0, 0), // Set the cookie expiration to the past
 		MaxAge:   -1,
 		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	// Clear the refresh token cookie
@@ -639,6 +641,8 @@ func (router *Router) LogOutHandler(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	w.WriteHeader(http.StatusOK)
