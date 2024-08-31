@@ -100,6 +100,7 @@ func (router *Router) VerifyToken(w http.ResponseWriter, r *http.Request) {
 			MaxAge:   900,
 			HttpOnly: true,
 			Secure:   true,
+			SameSite: http.SameSiteNoneMode,
 		})
 		w.Write([]byte(strconv.Itoa(int(userId))))
 
@@ -167,6 +168,7 @@ func (router *Router) LogInHandler(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   900,
 		HttpOnly: true,
 		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	http.SetCookie(w, &http.Cookie{
@@ -177,6 +179,7 @@ func (router *Router) LogInHandler(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   86400,
 		HttpOnly: true,
 		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 }
@@ -601,6 +604,7 @@ func (router *Router) RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   900,
 		HttpOnly: true,
 		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	http.SetCookie(w, &http.Cookie{
@@ -611,6 +615,7 @@ func (router *Router) RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   86400,
 		HttpOnly: true,
 		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 }
