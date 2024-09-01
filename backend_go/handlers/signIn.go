@@ -99,8 +99,8 @@ func VerifyToken(w http.ResponseWriter, r *http.Request) {
 			Expires:  time.Now().Add(15 * time.Minute),
 			MaxAge:   900,
 			HttpOnly: true,
-			// Secure:   true,
-			// SameSite: http.SameSiteNoneMode,
+			Secure:   true,
+			SameSite: http.SameSiteNoneMode,
 		})
 		w.Write([]byte(strconv.Itoa(int(userId))))
 
@@ -167,8 +167,8 @@ func (router *Router) LogInHandler(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(15 * time.Minute),
 		MaxAge:   900,
 		HttpOnly: true,
-		// Secure:   true,
-		// SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	http.SetCookie(w, &http.Cookie{
@@ -178,8 +178,8 @@ func (router *Router) LogInHandler(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour),
 		MaxAge:   86400,
 		HttpOnly: true,
-		// Secure:   true,
-		// SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 }
@@ -341,8 +341,8 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(15 * time.Minute),
 		MaxAge:   900,
 		HttpOnly: true,
-		// Secure:   true,
-		// SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	http.SetCookie(w, &http.Cookie{
@@ -352,8 +352,8 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour),
 		MaxAge:   86400,
 		HttpOnly: true,
-		// Secure:   true,
-		// SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 }
@@ -367,8 +367,8 @@ func LogOutHandler(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Unix(0, 0), // Set the cookie expiration to the past
 		MaxAge:   -1,
 		HttpOnly: true,
-		// Secure:   true,
-		// SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	// Clear the refresh token cookie
@@ -379,8 +379,8 @@ func LogOutHandler(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 		HttpOnly: true,
-		// Secure:   true,
-		// SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	w.WriteHeader(http.StatusOK)
