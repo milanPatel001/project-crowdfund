@@ -1,6 +1,7 @@
-package main
+package handlers
 
 import (
+	"backend/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -59,18 +60,18 @@ func HandleDbConnection() (*pgxpool.Pool, error) {
 		return nil, fmt.Errorf("unable to parse config: %w", err)
 	}
 
-	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	Pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create connection pool: %w", err)
+		return nil, fmt.Errorf("unable to create connection Pool: %w", err)
 	}
 
-	return pool, nil
+	return Pool, nil
 }
 
 func (db *Database) EmailExistsQuery(email string) (int64, error) {
 
 	var id int64
-	err := db.pool.QueryRow(context.Background(), "SELECT id FROM users WHERE email = $1", email).Scan(&id)
+	err := db.Pool.QueryRow(context.Background(), "SELECT id FROM users WHERE email = $1", email).Scan(&id)
 
 	if err == pgx.ErrNoRows {
 		return -1, nil
@@ -81,7 +82,7 @@ func (db *Database) EmailExistsQuery(email string) (int64, error) {
 
 func (db *Database) SaveUserInfo(lname string, fname string, email string, password string, googleLogin bool, isVerified bool) (int64, error) {
 
-	hashedPassword, err := HashPassword(password)
+	hashedPassword, err := utils.HashPassword(password)
 
 	if err != nil {
 		return -1, err
@@ -89,7 +90,7 @@ func (db *Database) SaveUserInfo(lname string, fname string, email string, passw
 
 	var id int64
 
-	err = db.pool.QueryRow(context.Background(),
+	err = db.Pool.QueryRow(context.Background(),
 		"INSERT INTO users (fname, lname, email, hashed_password, google_login, is_verified) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
 		fname, lname, email, hashedPassword, googleLogin, isVerified).Scan(&id)
 
@@ -106,13 +107,13 @@ func (db *Database) DoesUserExists(email string, password string) (int64, error)
 	var id int64
 	var hashed_password string
 
-	err := db.pool.QueryRow(context.Background(), "SELECT id, hashed_password FROM users WHERE email = $1", email).Scan(&id, &hashed_password)
+	err := db.Pool.QueryRow(context.Background(), "SELECT id, hashed_password FROM users WHERE email = $1", email).Scan(&id, &hashed_password)
 
 	if err == pgx.ErrNoRows {
 		return -1, fmt.Errorf("Email is wrong!!")
 	}
 
-	isPasswordNotValid := CheckPassword(hashed_password, password)
+	isPasswordNotValid := utils.CheckPassword(hashed_password, password)
 
 	if isPasswordNotValid != nil {
 		return -1, fmt.Errorf("Password not valid..")
@@ -125,7 +126,7 @@ func (db *Database) GetFundsData() ([]FundData, error) {
 
 	query := "SELECT fd.*, coalesce(c_agg.comments_agg, '[]'::json) AS comments, coalesce(rd_agg.recent_donators_agg, '[]'::json) AS recentDonators FROM fundsData AS fd LEFT JOIN (SELECT fund_id, json_agg(json_build_object('id', id, 'donator', donator, 'amount', amount, 'comment', comment)) AS comments_agg FROM comments GROUP BY fund_id) AS c_agg ON fd.id = c_agg.fund_id LEFT JOIN (SELECT fund_id, json_agg(json_build_object('donator', donator, 'amount', amount) ORDER BY id DESC) AS recent_donators_agg FROM recentDonators GROUP BY fund_id) AS rd_agg ON fd.id = rd_agg.fund_id"
 
-	rows, err := db.pool.Query(context.Background(), query)
+	rows, err := db.Pool.Query(context.Background(), query)
 
 	if err != nil {
 		fmt.Println("Query failed:", err)
@@ -160,7 +161,7 @@ func (db *Database) GetFundsData() ([]FundData, error) {
 func (db *Database) GetUserHistory(userId int) ([]History, error) {
 	query := "SELECT id, amount, organizer, beneficiary, donated_at FROM history WHERE user_id = $1"
 
-	rows, err := db.pool.Query(context.Background(), query, userId)
+	rows, err := db.Pool.Query(context.Background(), query, userId)
 
 	if err != nil {
 		fmt.Println("Query failed:", err)
@@ -186,57 +187,57 @@ func (db *Database) GetUserHistory(userId int) ([]History, error) {
 }
 
 func (db *Database) SaveComment(fundId int, donator string, amount int, comment string) error {
-	commandTag, err := db.pool.Exec(context.Background(), "INSERT INTO comments (fund_id, donator, comment, amount) VALUES($1, $2, $3, $4) ", fundId, donator, comment, amount)
+	commandTag, err := db.Pool.Exec(context.Background(), "INSERT INTO comments (fund_id, donator, comment, amount) VALUES($1, $2, $3, $4) ", fundId, donator, comment, amount)
 
 	if err != nil {
 		return fmt.Errorf("Insert failed: %s", err)
 	}
 
-	fmt.Printf("Comment Insert successful:\n", commandTag.RowsAffected())
+	fmt.Println("Comment Insert successful:\n", commandTag.RowsAffected())
 
 	return nil
 
 }
 
 func (db *Database) SaveRecentDonator(fundId int, donator string, amount int) error {
-	commandTag, err := db.pool.Exec(context.Background(), "INSERT INTO recentdonators (fund_id, donator, amount) VALUES($1, $2, $3)", fundId, donator, amount)
+	commandTag, err := db.Pool.Exec(context.Background(), "INSERT INTO recentdonators (fund_id, donator, amount) VALUES($1, $2, $3)", fundId, donator, amount)
 
 	if err != nil {
 		return fmt.Errorf("Insert failed: %s", err)
 	}
 
-	fmt.Printf("Recent Donator Insert successful:\n", commandTag.RowsAffected())
+	fmt.Println("Recent Donator Insert successful:\n", commandTag.RowsAffected())
 
 	return nil
 }
 
 func (db *Database) SaveInHistory(donator Donator, userId int, organizer string) error {
-	commandTag, err := db.pool.Exec(context.Background(), "INSERT INTO history (user_id, amount, organizer, beneficiary, donated_at) VALUES($1, $2, $3, $4, $5)", userId, donator.Amount, organizer, donator.Beneficiary, "today")
+	commandTag, err := db.Pool.Exec(context.Background(), "INSERT INTO history (user_id, amount, organizer, beneficiary, donated_at) VALUES($1, $2, $3, $4, $5)", userId, donator.Amount, organizer, donator.Beneficiary, "today")
 
 	if err != nil {
 		return fmt.Errorf("Insert failed: %s", err)
 	}
 
-	fmt.Printf("History Insert successful:\n", commandTag.RowsAffected())
+	fmt.Println("History Insert successful:\n", commandTag.RowsAffected())
 
 	return nil
 }
 
 func (db *Database) IncreaseDonationInFundsData(amount int, fundId int) error {
-	commandTag, err := db.pool.Exec(context.Background(), "UPDATE fundsdata SET donation_num = donation_num + 1, total_donation = total_donation + $1 WHERE id = $2", amount, fundId)
+	commandTag, err := db.Pool.Exec(context.Background(), "UPDATE fundsdata SET donation_num = donation_num + 1, total_donation = total_donation + $1 WHERE id = $2", amount, fundId)
 
 	if err != nil {
 		return fmt.Errorf("Insert failed: %s", err)
 	}
 
-	fmt.Printf("Fundata Update successful:\n", commandTag.RowsAffected())
+	fmt.Println("Fundata Update successful:\n", commandTag.RowsAffected())
 
 	return nil
 }
 
 func (db *Database) SaveDonation(metaData map[string]string) error {
 
-	tx, err := db.pool.Begin(context.Background())
+	tx, err := db.Pool.Begin(context.Background())
 
 	if err != nil {
 		return fmt.Errorf("could not begin transaction: %v", err)

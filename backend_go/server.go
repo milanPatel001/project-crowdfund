@@ -5,39 +5,33 @@ import (
 	"net/http"
 	"os"
 
+	"backend/handlers"
+	"backend/utils"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/stripe/stripe-go/v79"
 )
-
-type Router struct {
-	DB *Database
-}
-
-type Database struct {
-	pool *pgxpool.Pool
-}
 
 func main() {
 	godotenv.Load()
 
 	port := os.Getenv("PORT")
-	JWT_SECRET = []byte(os.Getenv("JWT_SECRET"))
-	REFRESH_SECRET = []byte(os.Getenv("REFRESH_SECRET"))
-	GOOGLE_CLIENT_ID = os.Getenv("GOOGLE_CLIENT_ID")
-	GOOGLE_CLIENT_SECRET = os.Getenv("GOOGLE_CLIENT_SECRET")
-	REDIRECT_URI = os.Getenv("REDIRECT_URI")
-	STRIPE_SECRET_KEY = os.Getenv("STRIPE_SECRET_KEY")
-	SUCCESS_URL = os.Getenv("SUCCESS_URL")
-	ALLOWED_ORIGIN = os.Getenv("ALLOW")
+	utils.JWT_SECRET = []byte(os.Getenv("JWT_SECRET"))
+	utils.REFRESH_SECRET = []byte(os.Getenv("REFRESH_SECRET"))
+	utils.GOOGLE_CLIENT_ID = os.Getenv("GOOGLE_CLIENT_ID")
+	utils.GOOGLE_CLIENT_SECRET = os.Getenv("GOOGLE_CLIENT_SECRET")
+	utils.REDIRECT_URI = os.Getenv("REDIRECT_URI")
+	utils.STRIPE_SECRET_KEY = os.Getenv("STRIPE_SECRET_KEY")
+	utils.SUCCESS_URL = os.Getenv("SUCCESS_URL")
+	utils.ALLOWED_ORIGIN = os.Getenv("ALLOW")
 
-	if ALLOWED_ORIGIN == "" {
-		ALLOWED_ORIGIN = "https://*"
+	if utils.ALLOWED_ORIGIN == "" {
+		utils.ALLOWED_ORIGIN = "https://*"
 	}
 
-	stripe.Key = STRIPE_SECRET_KEY
+	stripe.Key = utils.STRIPE_SECRET_KEY
 
 	if port == "" {
 		port = ":8080"
@@ -45,23 +39,23 @@ func main() {
 		port = ":" + port
 	}
 
-	pool, err := HandleDbConnection()
+	pool, err := handlers.HandleDbConnection()
 
 	if err != nil {
 		fmt.Println("Error connecting to database:", err)
 		return
 	}
 
-	DB := &Database{pool}
-	router := &Router{DB}
+	DB := &handlers.Database{Pool: pool}
+	router := &handlers.Router{DB: DB}
 
-	defer router.DB.pool.Close()
+	defer router.DB.Pool.Close()
 
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{ALLOWED_ORIGIN, "http://localhost:3000"},
+		AllowedOrigins: []string{utils.ALLOWED_ORIGIN, "http://localhost:3000"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
@@ -74,18 +68,18 @@ func main() {
 	r.Post("/verifyOtp", router.SignUpHandler)
 
 	r.Post("/login", router.LogInHandler)
-	r.Post("/verifyToken", VerifyToken)
-	r.HandleFunc("/auth/google", GoogleLoginHandler)
+	r.Post("/verifyToken", handlers.VerifyToken)
+	r.HandleFunc("/auth/google", handlers.GoogleLoginHandler)
 	r.HandleFunc("/auth/callback", router.GoogleCallbackHandler)
-	r.Post("/auth/redirect", RedirectHandler)
-	r.Get("/logout", LogOutHandler)
+	r.Post("/auth/redirect", handlers.RedirectHandler)
+	r.Get("/logout", handlers.LogOutHandler)
 
 	r.Get("/ws", router.WsHandler)
 
 	r.Get("/fundsData", router.FundsDataHandler)
 	r.Get("/history", router.HistoryHandler)
 
-	r.Post("/createCheckoutSession", CreateCheckoutSession)
+	r.Post("/createCheckoutSession", handlers.CreateCheckoutSession)
 	r.HandleFunc("/webhook", router.StripeWebhookHandler)
 
 	fmt.Println("Server starting on port ", port)

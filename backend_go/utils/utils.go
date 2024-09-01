@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"crypto/rand"
@@ -161,7 +161,7 @@ func GenerateCustomID() string {
 	return fmt.Sprintf("%d-%d", currentTime, randomNumber)
 }
 
-func generateOTP() string {
+func GenerateOTP() string {
 
 	n, _ := rand.Int(rand.Reader, big.NewInt(9000))
 

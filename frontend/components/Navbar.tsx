@@ -36,10 +36,10 @@ export default function Navbar() {
 
   return (
     <div className="bg-white p-4 sticky top-0 shadow-2xl z-50">
-      <div className="flex flex-col md:flex-row items-center">
+      <div className="flex flex-col md:flex-row items-center justify-center md:justify-normal md:gap-8 lg:gap-4">
         <h1
           onClick={() => router.push("/")}
-          className="cursor-pointer md:w-1/12 text-green-600 font-serif font-bold text-4xl select-none w-1/5"
+          className="cursor-pointer mr-2 sm:mr-0 md:w-1/12 text-green-600 font-serif font-bold text-3xl sm:text-4xl select-none w-1/5"
         >
           FundX
         </h1>

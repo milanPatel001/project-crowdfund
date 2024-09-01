@@ -1,6 +1,7 @@
-package main
+package handlers
 
 import (
+	"backend/utils"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -50,7 +51,7 @@ func (router *Router) WsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	clientID := GenerateCustomID()
+	clientID := utils.GenerateCustomID()
 
 	lock.Lock()
 	clients[clientID] = conn
@@ -103,7 +104,7 @@ func (router *Router) WsHandler(w http.ResponseWriter, r *http.Request) {
 		case "removeIdentifier":
 			mapLock.Lock()
 			// here, userId is sessionId
-			delete(googleIdentifierMap, msg.Content.UserId)
+			delete(utils.GoogleIdentifierMap, msg.Content.UserId)
 			mapLock.Unlock()
 		default:
 			res, _ := json.Marshal(Message[[]byte]{"def", []byte("Freee!!!"), "Ting!!"})
