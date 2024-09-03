@@ -2,6 +2,12 @@
 const nextConfig = {
     images: {
         domains: ["api.dicebear.com"],
+        remotePatterns: [
+          {
+            protocol: 'https',
+            hostname: '**.amazonaws.com',
+          },
+        ],
       },
       eslint: {
         ignoreDuringBuilds: true,

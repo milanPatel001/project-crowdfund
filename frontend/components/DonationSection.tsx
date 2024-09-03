@@ -4,10 +4,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useSocket } from "./SocketProvider";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-//import { loadStripe } from "@stripe/stripe-js";
 import "react-toastify/dist/ReactToastify.css";
-import { FundData } from "@/backend";
-
 
 type DonationProps = {
   title: string,

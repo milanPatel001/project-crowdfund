@@ -22,7 +22,7 @@ export default function History() {
 
     if(res.ok){
       const result : Hist[] = await res.json();
-      console.log(result)
+
       setHistory(result)
 
     }else{
@@ -40,7 +40,9 @@ export default function History() {
   return (
     <div className="flex flex-col gap-2 h-screen bg-white">
       <Navbar />
-      <div className="md:w-2/3 lg:w-1/2 md:mx-auto md:rounded-lg shadow-lg border border-gray-400 bg-white mt-10 md:px-10 md:py-5">
+
+      {history.length > 0 ? (
+        <div className="md:w-2/3 lg:w-1/2 md:mx-auto md:rounded-lg shadow-lg border border-gray-400 bg-white mt-10 md:px-10 md:py-5">
         <div className="flex gap-3 mb-2 font-medium text-lg">
           <p className="w-1/12"></p>
           <p className="w-3/12 text-center">Organizer</p>
@@ -62,6 +64,23 @@ export default function History() {
           </div>
         ))}
       </div>
+      ) : (
+        <div className="h-screen flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center justify-center gap-3 mb-12">
+            <img
+              width={100}
+              height={100}
+              src="https://api.dicebear.com/9.x/avataaars/svg?seed=mi&eyes=cry&mouth=sad"
+              alt="avt"
+              loading="lazy"
+            />
+            <p className="text-2xl font-serif">You don't have any donation history!!!</p>
+        </div>
+        </div>
+      )}
+
+
+      
     </div>
   );
 }

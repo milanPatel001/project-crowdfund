@@ -62,7 +62,7 @@ export default function Navbar() {
 
           <div
             className="flex items-center gap-2 p-1 px-2 rounded-xl text-black text-xl select-none hover:bg-pink-500 hover:font-bold hover:text-white cursor-pointer"
-            //onClick={() => router.push("/form")}
+            onClick={() => router.push("/form")}
           >
             <PlusCircleIcon className="w-7 h-7" />
             Start a fundraiser
