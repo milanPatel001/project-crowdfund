@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"backend/utils"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,80 +13,83 @@ import (
 	"github.com/stripe/stripe-go/v79/checkout/session"
 )
 
-func (router *Router) StripeWebhookHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Inside Webhook")
+func (router *Router) StripeWebhookHandler(ctx context.Context) http.HandlerFunc {
 
-	const MaxBodyBytes = int64(65536)
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodyBytes)
-	payload, err := io.ReadAll(r.Body)
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Inside Webhook")
 
-	if err != nil {
-		fmt.Printf("Error reading request body: %v\n", err)
-		w.WriteHeader(http.StatusServiceUnavailable)
-		return
-	}
+		const MaxBodyBytes = int64(65536)
+		r.Body = http.MaxBytesReader(w, r.Body, MaxBodyBytes)
+		payload, err := io.ReadAll(r.Body)
 
-	event := stripe.Event{}
-
-	if err := json.Unmarshal(payload, &event); err != nil {
-		fmt.Printf("Failed to parse webhook body json: %v\n", err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	eventType := event.Type
-
-	if eventType == "checkout.session.completed" {
-		var session stripe.CheckoutSession
-		err := json.Unmarshal(event.Data.Raw, &session)
 		if err != nil {
-			fmt.Printf("Error parsing webhook JSON: %v\n", err)
+			fmt.Printf("Error reading request body: %v\n", err)
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+
+		event := stripe.Event{}
+
+		if err := json.Unmarshal(payload, &event); err != nil {
+			fmt.Printf("Failed to parse webhook body json: %v\n", err.Error())
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		fmt.Println(session.Metadata)
+		eventType := event.Type
 
-		// **** Save info in DB using transaction
-		err = router.DB.SaveDonation(session.Metadata)
-
-		if err != nil {
-			fmt.Println("Could not save donation data in DB")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		amount, _ := strconv.Atoi(session.Metadata["amount"])
-
-		func() {
-			lock.Lock()
-			paymentCompletedMap[session.Metadata["userId"]] = Donator{
-				session.Metadata["fundId"],
-				amount,
-				session.Metadata["beneficiary"],
-				session.Metadata["donator"],
-				session.Metadata["comment"],
+		if eventType == "checkout.session.completed" {
+			var session stripe.CheckoutSession
+			err := json.Unmarshal(event.Data.Raw, &session)
+			if err != nil {
+				fmt.Printf("Error parsing webhook JSON: %v\n", err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
 			}
-			defer lock.Unlock()
-		}()
 
-		// broadcast fundId, userId, amount, donator, comment
-		m := Message[Donator]{
-			"donationBroadcast",
-			paymentCompletedMap[session.Metadata["userId"]],
-			"donation broadcast",
-		}
+			fmt.Println(session.Metadata)
 
-		msg, _ := json.Marshal(m)
+			// **** Save info in DB using transaction
+			err = router.DB.SaveDonation(ctx, session.Metadata)
 
-		err = BroadcastMessage(msg)
-		if err != nil {
-			fmt.Println("Error broadcasting the donation data!!!")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			if err != nil {
+				fmt.Println("Could not save donation data in DB")
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			amount, _ := strconv.Atoi(session.Metadata["amount"])
+
+			func() {
+				lock.Lock()
+				paymentCompletedMap[session.Metadata["userId"]] = Donator{
+					session.Metadata["fundId"],
+					amount,
+					session.Metadata["beneficiary"],
+					session.Metadata["donator"],
+					session.Metadata["comment"],
+				}
+				defer lock.Unlock()
+			}()
+
+			// broadcast fundId, userId, amount, donator, comment
+			m := Message[Donator]{
+				"donationBroadcast",
+				paymentCompletedMap[session.Metadata["userId"]],
+				"donation broadcast",
+			}
+
+			msg, _ := json.Marshal(m)
+
+			err = BroadcastMessage(msg)
+			if err != nil {
+				fmt.Println("Error broadcasting the donation data!!!")
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+
 		}
 
 	}
-
 }
 
 func CreateCheckoutSession(w http.ResponseWriter, r *http.Request) {

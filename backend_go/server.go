@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -8,6 +9,8 @@ import (
 	"backend/handlers"
 	"backend/utils"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
@@ -26,6 +29,10 @@ func main() {
 	utils.STRIPE_SECRET_KEY = os.Getenv("STRIPE_SECRET_KEY")
 	utils.SUCCESS_URL = os.Getenv("SUCCESS_URL")
 	utils.ALLOWED_ORIGIN = os.Getenv("ALLOW")
+	utils.AWS_ACCESS_KEY_ID = os.Getenv("AWS_ACCESS_KEY_ID")
+	utils.AWS_SECRET_ACCESS_KEY = os.Getenv("AWS_SECRET_ACCESS_KEY")
+	utils.AWS_REGION = os.Getenv("AWS_REGION")
+	utils.AWS_BUCKET = os.Getenv("AWS_BUCKET")
 
 	if utils.ALLOWED_ORIGIN == "" {
 		utils.ALLOWED_ORIGIN = "https://*"
@@ -39,15 +46,28 @@ func main() {
 		port = ":" + port
 	}
 
-	pool, err := handlers.HandleDbConnection()
+	ctx := context.Background()
+	awsCtx := context.TODO()
+
+	pool, err := handlers.HandleDbConnection(ctx)
 
 	if err != nil {
 		fmt.Println("Error connecting to database:", err)
 		return
 	}
 
+	cfg, err := config.LoadDefaultConfig(awsCtx)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Create an Amazon S3 service client
+	client := s3.NewFromConfig(cfg)
+
 	DB := &handlers.Database{Pool: pool}
 	router := &handlers.Router{DB: DB}
+	awsRouter := &handlers.AWSRouter{DB: DB, Client: client}
 
 	defer router.DB.Pool.Close()
 
@@ -64,23 +84,24 @@ func main() {
 		MaxAge:           86400, // Maximum value not ignored by any of major browsers
 	}))
 
-	r.Post("/generateOtp", router.OTPHandler)
-	r.Post("/verifyOtp", router.SignUpHandler)
+	r.Post("/generateOtp", router.OTPHandler(ctx))
+	r.Post("/verifyOtp", router.SignUpHandler(ctx))
 
-	r.Post("/login", router.LogInHandler)
+	r.Post("/login", router.LogInHandler(ctx))
 	r.Post("/verifyToken", handlers.VerifyToken)
 	r.HandleFunc("/auth/google", handlers.GoogleLoginHandler)
-	r.HandleFunc("/auth/callback", router.GoogleCallbackHandler)
+	r.HandleFunc("/auth/callback", router.GoogleCallbackHandler(ctx))
 	r.Post("/auth/redirect", handlers.RedirectHandler)
 	r.Get("/logout", handlers.LogOutHandler)
 
 	r.Get("/ws", router.WsHandler)
 
-	r.Get("/fundsData", router.FundsDataHandler)
-	r.Get("/history", router.HistoryHandler)
+	r.Get("/fundsData", router.FundsDataHandler(ctx))
+	r.Get("/history", router.HistoryHandler(ctx))
+	r.Post("/createCrowdFund", awsRouter.FundCreationHandler(awsCtx))
 
 	r.Post("/createCheckoutSession", handlers.CreateCheckoutSession)
-	r.HandleFunc("/webhook", router.StripeWebhookHandler)
+	r.HandleFunc("/webhook", router.StripeWebhookHandler(ctx))
 
 	fmt.Println("Server starting on port ", port)
 	err = http.ListenAndServe(port, r)

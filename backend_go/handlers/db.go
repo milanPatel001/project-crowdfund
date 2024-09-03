@@ -52,7 +52,24 @@ type FundData struct {
 	RecentDonators  []RecentDonator `json:"recentdonators"`
 }
 
-func HandleDbConnection() (*pgxpool.Pool, error) {
+func (db *Database) CreateCrowdFund(ctx context.Context, name, place, beneficiary, title, story, imgUrl string, goal int) (int64, error) {
+
+	var id int64
+
+	err := db.Pool.QueryRow(ctx,
+		"INSERT INTO fundsdata (name, story, beneficiary_name, place, title, img, created_at, goal, donation_num, total_donation) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
+		name, story, beneficiary, place, title, imgUrl, time.Now(), goal, 0, 0).Scan(&id)
+
+	if err != nil {
+		return -1, fmt.Errorf("Insert failed: %s", err)
+	}
+
+	fmt.Printf("\nFundData Insert successful\n")
+
+	return id, nil
+}
+
+func HandleDbConnection(ctx context.Context) (*pgxpool.Pool, error) {
 	connectionStr := os.Getenv("PG_URL")
 
 	config, err := pgxpool.ParseConfig(connectionStr)
@@ -60,7 +77,7 @@ func HandleDbConnection() (*pgxpool.Pool, error) {
 		return nil, fmt.Errorf("unable to parse config: %w", err)
 	}
 
-	Pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	Pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create connection Pool: %w", err)
 	}
@@ -68,10 +85,10 @@ func HandleDbConnection() (*pgxpool.Pool, error) {
 	return Pool, nil
 }
 
-func (db *Database) EmailExistsQuery(email string) (int64, error) {
+func (db *Database) EmailExistsQuery(ctx context.Context, email string) (int64, error) {
 
 	var id int64
-	err := db.Pool.QueryRow(context.Background(), "SELECT id FROM users WHERE email = $1", email).Scan(&id)
+	err := db.Pool.QueryRow(ctx, "SELECT id FROM users WHERE email = $1", email).Scan(&id)
 
 	if err == pgx.ErrNoRows {
 		return -1, nil
@@ -80,7 +97,7 @@ func (db *Database) EmailExistsQuery(email string) (int64, error) {
 	return id, err
 }
 
-func (db *Database) SaveUserInfo(lname string, fname string, email string, password string, googleLogin bool, isVerified bool) (int64, error) {
+func (db *Database) SaveUserInfo(ctx context.Context, lname string, fname string, email string, password string, googleLogin bool, isVerified bool) (int64, error) {
 
 	hashedPassword, err := utils.HashPassword(password)
 
@@ -90,7 +107,7 @@ func (db *Database) SaveUserInfo(lname string, fname string, email string, passw
 
 	var id int64
 
-	err = db.Pool.QueryRow(context.Background(),
+	err = db.Pool.QueryRow(ctx,
 		"INSERT INTO users (fname, lname, email, hashed_password, google_login, is_verified) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
 		fname, lname, email, hashedPassword, googleLogin, isVerified).Scan(&id)
 
@@ -103,11 +120,11 @@ func (db *Database) SaveUserInfo(lname string, fname string, email string, passw
 	return id, nil
 }
 
-func (db *Database) DoesUserExists(email string, password string) (int64, error) {
+func (db *Database) DoesUserExists(ctx context.Context, email string, password string) (int64, error) {
 	var id int64
 	var hashed_password string
 
-	err := db.Pool.QueryRow(context.Background(), "SELECT id, hashed_password FROM users WHERE email = $1", email).Scan(&id, &hashed_password)
+	err := db.Pool.QueryRow(ctx, "SELECT id, hashed_password FROM users WHERE email = $1", email).Scan(&id, &hashed_password)
 
 	if err == pgx.ErrNoRows {
 		return -1, fmt.Errorf("Email is wrong!!")
@@ -122,11 +139,11 @@ func (db *Database) DoesUserExists(email string, password string) (int64, error)
 	return id, nil
 }
 
-func (db *Database) GetFundsData() ([]FundData, error) {
+func (db *Database) GetFundsData(ctx context.Context) ([]FundData, error) {
 
 	query := "SELECT fd.*, coalesce(c_agg.comments_agg, '[]'::json) AS comments, coalesce(rd_agg.recent_donators_agg, '[]'::json) AS recentDonators FROM fundsData AS fd LEFT JOIN (SELECT fund_id, json_agg(json_build_object('id', id, 'donator', donator, 'amount', amount, 'comment', comment)) AS comments_agg FROM comments GROUP BY fund_id) AS c_agg ON fd.id = c_agg.fund_id LEFT JOIN (SELECT fund_id, json_agg(json_build_object('donator', donator, 'amount', amount) ORDER BY id DESC) AS recent_donators_agg FROM recentDonators GROUP BY fund_id) AS rd_agg ON fd.id = rd_agg.fund_id"
 
-	rows, err := db.Pool.Query(context.Background(), query)
+	rows, err := db.Pool.Query(ctx, query)
 
 	if err != nil {
 		fmt.Println("Query failed:", err)
@@ -158,10 +175,10 @@ func (db *Database) GetFundsData() ([]FundData, error) {
 	return data, nil
 }
 
-func (db *Database) GetUserHistory(userId int) ([]History, error) {
+func (db *Database) GetUserHistory(ctx context.Context, userId int) ([]History, error) {
 	query := "SELECT id, amount, organizer, beneficiary, donated_at FROM history WHERE user_id = $1"
 
-	rows, err := db.Pool.Query(context.Background(), query, userId)
+	rows, err := db.Pool.Query(ctx, query, userId)
 
 	if err != nil {
 		fmt.Println("Query failed:", err)
@@ -186,8 +203,8 @@ func (db *Database) GetUserHistory(userId int) ([]History, error) {
 	return data, nil
 }
 
-func (db *Database) SaveComment(fundId int, donator string, amount int, comment string) error {
-	commandTag, err := db.Pool.Exec(context.Background(), "INSERT INTO comments (fund_id, donator, comment, amount) VALUES($1, $2, $3, $4) ", fundId, donator, comment, amount)
+func (db *Database) SaveComment(ctx context.Context, fundId int, donator string, amount int, comment string) error {
+	commandTag, err := db.Pool.Exec(ctx, "INSERT INTO comments (fund_id, donator, comment, amount) VALUES($1, $2, $3, $4) ", fundId, donator, comment, amount)
 
 	if err != nil {
 		return fmt.Errorf("Insert failed: %s", err)
@@ -199,8 +216,8 @@ func (db *Database) SaveComment(fundId int, donator string, amount int, comment 
 
 }
 
-func (db *Database) SaveRecentDonator(fundId int, donator string, amount int) error {
-	commandTag, err := db.Pool.Exec(context.Background(), "INSERT INTO recentdonators (fund_id, donator, amount) VALUES($1, $2, $3)", fundId, donator, amount)
+func (db *Database) SaveRecentDonator(ctx context.Context, fundId int, donator string, amount int) error {
+	commandTag, err := db.Pool.Exec(ctx, "INSERT INTO recentdonators (fund_id, donator, amount) VALUES($1, $2, $3)", fundId, donator, amount)
 
 	if err != nil {
 		return fmt.Errorf("Insert failed: %s", err)
@@ -211,8 +228,8 @@ func (db *Database) SaveRecentDonator(fundId int, donator string, amount int) er
 	return nil
 }
 
-func (db *Database) SaveInHistory(donator Donator, userId int, organizer string) error {
-	commandTag, err := db.Pool.Exec(context.Background(), "INSERT INTO history (user_id, amount, organizer, beneficiary, donated_at) VALUES($1, $2, $3, $4, $5)", userId, donator.Amount, organizer, donator.Beneficiary, "today")
+func (db *Database) SaveInHistory(ctx context.Context, donator Donator, userId int, organizer string) error {
+	commandTag, err := db.Pool.Exec(ctx, "INSERT INTO history (user_id, amount, organizer, beneficiary, donated_at) VALUES($1, $2, $3, $4, $5)", userId, donator.Amount, organizer, donator.Beneficiary, "today")
 
 	if err != nil {
 		return fmt.Errorf("Insert failed: %s", err)
@@ -223,8 +240,8 @@ func (db *Database) SaveInHistory(donator Donator, userId int, organizer string)
 	return nil
 }
 
-func (db *Database) IncreaseDonationInFundsData(amount int, fundId int) error {
-	commandTag, err := db.Pool.Exec(context.Background(), "UPDATE fundsdata SET donation_num = donation_num + 1, total_donation = total_donation + $1 WHERE id = $2", amount, fundId)
+func (db *Database) IncreaseDonationInFundsData(ctx context.Context, amount int, fundId int) error {
+	commandTag, err := db.Pool.Exec(ctx, "UPDATE fundsdata SET donation_num = donation_num + 1, total_donation = total_donation + $1 WHERE id = $2", amount, fundId)
 
 	if err != nil {
 		return fmt.Errorf("Insert failed: %s", err)
@@ -235,9 +252,9 @@ func (db *Database) IncreaseDonationInFundsData(amount int, fundId int) error {
 	return nil
 }
 
-func (db *Database) SaveDonation(metaData map[string]string) error {
+func (db *Database) SaveDonation(ctx context.Context, metaData map[string]string) error {
 
-	tx, err := db.Pool.Begin(context.Background())
+	tx, err := db.Pool.Begin(ctx)
 
 	if err != nil {
 		return fmt.Errorf("could not begin transaction: %v", err)
@@ -245,7 +262,7 @@ func (db *Database) SaveDonation(metaData map[string]string) error {
 
 	defer func() {
 		if err != nil {
-			tx.Rollback(context.Background())
+			tx.Rollback(ctx)
 			fmt.Println("Transaction rolled back due to an error:", err)
 		}
 	}()
@@ -262,29 +279,29 @@ func (db *Database) SaveDonation(metaData map[string]string) error {
 		metaData["comment"],
 	}
 
-	err = db.SaveRecentDonator(fundId, d.Name, amount)
+	err = db.SaveRecentDonator(ctx, fundId, d.Name, amount)
 	if err != nil {
 		return fmt.Errorf("Could not execute query: %v", err)
 	}
 
 	if d.Comment != "" {
-		err = db.SaveComment(fundId, d.Name, amount, d.Comment)
+		err = db.SaveComment(ctx, fundId, d.Name, amount, d.Comment)
 		if err != nil {
 			return fmt.Errorf("Could not execute query: %v", err)
 		}
 	}
 
-	err = db.SaveInHistory(d, userId, metaData["organizer"])
+	err = db.SaveInHistory(ctx, d, userId, metaData["organizer"])
 	if err != nil {
 		return fmt.Errorf("Could not execute query: %v", err)
 	}
 
-	err = db.IncreaseDonationInFundsData(amount, fundId)
+	err = db.IncreaseDonationInFundsData(ctx, amount, fundId)
 	if err != nil {
 		return fmt.Errorf("Could not execute query: %v", err)
 	}
 
-	if err = tx.Commit(context.Background()); err != nil {
+	if err = tx.Commit(ctx); err != nil {
 		return fmt.Errorf("could not commit transaction: %v", err)
 	}
 

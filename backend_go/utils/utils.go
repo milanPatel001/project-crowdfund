@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -9,6 +11,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -17,6 +21,28 @@ var (
 	JWT_SECRET     []byte
 	REFRESH_SECRET []byte
 )
+
+func UploadImageToS3(ctx context.Context, s3Client *s3.Client, img []byte, bucketName, key string) error {
+
+	imgReader := bytes.NewReader(img)
+
+	// Upload the file
+	_, err := s3Client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(key),
+		Body:   imgReader,
+		//ACL:    types.ObjectCannedACLPublicRead, // Make the file publicly accessible
+	})
+	if err != nil {
+		return fmt.Errorf("unable to upload %q to %q, %v", key, bucketName, err)
+	}
+
+	return nil
+}
+
+func GetPermanentURL(bucketName, region, key string) string {
+	return fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, key)
+}
 
 func HashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

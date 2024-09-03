@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"backend/utils"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -99,8 +100,8 @@ func VerifyToken(w http.ResponseWriter, r *http.Request) {
 			Expires:  time.Now().Add(15 * time.Minute),
 			MaxAge:   900,
 			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteNoneMode,
+			// Secure:   true,
+			// SameSite: http.SameSiteNoneMode,
 		})
 		w.Write([]byte(strconv.Itoa(int(userId))))
 
@@ -121,67 +122,69 @@ func VerifyToken(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (router *Router) LogInHandler(w http.ResponseWriter, r *http.Request) {
+func (router *Router) LogInHandler(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
-	sign := struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}{}
+		sign := struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		}{}
 
-	if err := json.NewDecoder(r.Body).Decode(&sign); err != nil {
-		fmt.Print(err)
-		//json.NewEncoder(w).Encode(Response{false, err.Error()})
-		http.Error(w, "Decoding failed", http.StatusInternalServerError)
-		return
+		if err := json.NewDecoder(r.Body).Decode(&sign); err != nil {
+			fmt.Print(err)
+			//json.NewEncoder(w).Encode(Response{false, err.Error()})
+			http.Error(w, "Decoding failed", http.StatusInternalServerError)
+			return
+		}
+		defer r.Body.Close()
+
+		id, err := router.DB.DoesUserExists(ctx, sign.Email, sign.Password)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		jwtToken, err := utils.CreateJWTToken(id, sign.Email)
+
+		if err != nil {
+			fmt.Println("Error creating JWT token:", err)
+			http.Error(w, "Error creating JWT token", http.StatusInternalServerError)
+			return
+		}
+
+		// Generate refresh token
+		refreshToken, err := utils.CreateRefreshToken(id, sign.Email)
+
+		if err != nil {
+			fmt.Println("Error creating refresh token:", err)
+			http.Error(w, "Error creating refresh token", http.StatusInternalServerError)
+			return
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "access",
+			Value:    jwtToken,
+			Path:     "/",
+			Expires:  time.Now().Add(15 * time.Minute),
+			MaxAge:   900,
+			HttpOnly: true,
+			// Secure:   true,
+			// SameSite: http.SameSiteNoneMode,
+		})
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh",
+			Value:    refreshToken,
+			Path:     "/",
+			Expires:  time.Now().Add(24 * time.Hour),
+			MaxAge:   86400,
+			HttpOnly: true,
+			// Secure:   true,
+			// SameSite: http.SameSiteNoneMode,
+		})
+
 	}
-	defer r.Body.Close()
-
-	id, err := router.DB.DoesUserExists(sign.Email, sign.Password)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	jwtToken, err := utils.CreateJWTToken(id, sign.Email)
-
-	if err != nil {
-		fmt.Println("Error creating JWT token:", err)
-		http.Error(w, "Error creating JWT token", http.StatusInternalServerError)
-		return
-	}
-
-	// Generate refresh token
-	refreshToken, err := utils.CreateRefreshToken(id, sign.Email)
-
-	if err != nil {
-		fmt.Println("Error creating refresh token:", err)
-		http.Error(w, "Error creating refresh token", http.StatusInternalServerError)
-		return
-	}
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access",
-		Value:    jwtToken,
-		Path:     "/",
-		Expires:  time.Now().Add(15 * time.Minute),
-		MaxAge:   900,
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
-	})
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh",
-		Value:    refreshToken,
-		Path:     "/",
-		Expires:  time.Now().Add(24 * time.Hour),
-		MaxAge:   86400,
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
-	})
-
 }
 
 func GoogleLoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -193,105 +196,107 @@ func GoogleLoginHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, authURL, http.StatusSeeOther)
 }
 
-func (router *Router) GoogleCallbackHandler(w http.ResponseWriter, r *http.Request) {
-	// Get the authorization code from the query parameters
-	code := r.URL.Query().Get("code")
-	if code == "" {
-		http.Error(w, "Authorization code not provided", http.StatusBadRequest)
-		return
-	}
+func (router *Router) GoogleCallbackHandler(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Get the authorization code from the query parameters
+		code := r.URL.Query().Get("code")
+		if code == "" {
+			http.Error(w, "Authorization code not provided", http.StatusBadRequest)
+			return
+		}
 
-	// Exchange the authorization code for an access token
-	tokenResp, err := http.PostForm("https://oauth2.googleapis.com/token", url.Values{
-		"client_id":     {utils.GOOGLE_CLIENT_ID},
-		"client_secret": {utils.GOOGLE_CLIENT_SECRET},
-		"redirect_uri":  {utils.REDIRECT_URI},
-		"grant_type":    {"authorization_code"},
-		"code":          {code},
-	})
+		// Exchange the authorization code for an access token
+		tokenResp, err := http.PostForm("https://oauth2.googleapis.com/token", url.Values{
+			"client_id":     {utils.GOOGLE_CLIENT_ID},
+			"client_secret": {utils.GOOGLE_CLIENT_SECRET},
+			"redirect_uri":  {utils.REDIRECT_URI},
+			"grant_type":    {"authorization_code"},
+			"code":          {code},
+		})
 
-	if err != nil {
-		http.Error(w, "Failed to exchange token: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer tokenResp.Body.Close()
+		if err != nil {
+			http.Error(w, "Failed to exchange token: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer tokenResp.Body.Close()
 
-	body, err := io.ReadAll(tokenResp.Body)
-	if err != nil {
-		http.Error(w, "Failed to read response body: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+		body, err := io.ReadAll(tokenResp.Body)
+		if err != nil {
+			http.Error(w, "Failed to read response body: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	var tokenData map[string]interface{}
-	if err := json.Unmarshal(body, &tokenData); err != nil {
-		http.Error(w, "Failed to parse token response: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+		var tokenData map[string]interface{}
+		if err := json.Unmarshal(body, &tokenData); err != nil {
+			http.Error(w, "Failed to parse token response: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	// Extract the access token
-	accessToken, ok := tokenData["access_token"].(string)
-	if !ok {
-		http.Error(w, "No access token found", http.StatusInternalServerError)
-		return
-	}
+		// Extract the access token
+		accessToken, ok := tokenData["access_token"].(string)
+		if !ok {
+			http.Error(w, "No access token found", http.StatusInternalServerError)
+			return
+		}
 
-	// Use the access token to get user info
-	userInfo, err := utils.GetUserInfo(accessToken)
-	if err != nil {
-		http.Error(w, "Failed to get user info: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+		// Use the access token to get user info
+		userInfo, err := utils.GetUserInfo(accessToken)
+		if err != nil {
+			http.Error(w, "Failed to get user info: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	//fmt.Fprintf(w, "User Info: %+v", userInfo)
-	//get user info
-	email := userInfo["email"].(string)
-	fname := userInfo["given_name"].(string)
-	lname := userInfo["family_name"].(string)
+		//fmt.Fprintf(w, "User Info: %+v", userInfo)
+		//get user info
+		email := userInfo["email"].(string)
+		fname := userInfo["given_name"].(string)
+		lname := userInfo["family_name"].(string)
 
-	//check if user exists in db, if not create the user
-	id, err := router.DB.EmailExistsQuery(email)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if id == 0 || id == -1 {
-		// generate a hard,random password
-		pswd := utils.GenerateCustomID()
-		id, err = router.DB.SaveUserInfo(lname, fname, email, pswd, true, false)
+		//check if user exists in db, if not create the user
+		id, err := router.DB.EmailExistsQuery(ctx, email)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		if id == 0 || id == -1 {
+			// generate a hard,random password
+			pswd := utils.GenerateCustomID()
+			id, err = router.DB.SaveUserInfo(ctx, lname, fname, email, pswd, true, false)
+
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		googleLoginIdentifier := utils.GenerateCustomID()
+
+		func() {
+			utils.GoogleIdentifierLock.Lock()
+			utils.GoogleIdentifierMap[googleLoginIdentifier] = 1
+			defer utils.GoogleIdentifierLock.Unlock()
+		}()
+
+		frontendURL := fmt.Sprintf("%s/login?id=%v&email=%s&session=%s", utils.SUCCESS_URL, id, email, googleLoginIdentifier)
+
+		// Return HTML with script to replace the current window location
+		html := fmt.Sprintf(`
+			<html>
+			<body>
+				<script>
+					window.location.replace("%s");
+				</script>
+			</body>
+			</html>
+		`, frontendURL)
+
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(html))
+
 	}
-
-	googleLoginIdentifier := utils.GenerateCustomID()
-
-	func() {
-		utils.GoogleIdentifierLock.Lock()
-		utils.GoogleIdentifierMap[googleLoginIdentifier] = 1
-		defer utils.GoogleIdentifierLock.Unlock()
-	}()
-
-	frontendURL := fmt.Sprintf("%s/login?id=%v&email=%s&session=%s", utils.SUCCESS_URL, id, email, googleLoginIdentifier)
-
-	// Return HTML with script to replace the current window location
-	html := fmt.Sprintf(`
-		<html>
-		<body>
-			<script>
-				window.location.replace("%s");
-			</script>
-		</body>
-		</html>
-	`, frontendURL)
-
-	w.Header().Set("Content-Type", "text/html")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(html))
-
 }
 
 func RedirectHandler(w http.ResponseWriter, r *http.Request) {
@@ -341,8 +346,8 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(15 * time.Minute),
 		MaxAge:   900,
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
+		// Secure:   true,
+		// SameSite: http.SameSiteNoneMode,
 	})
 
 	http.SetCookie(w, &http.Cookie{
@@ -352,8 +357,8 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour),
 		MaxAge:   86400,
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
+		// Secure:   true,
+		// SameSite: http.SameSiteNoneMode,
 	})
 
 }
@@ -367,8 +372,8 @@ func LogOutHandler(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Unix(0, 0), // Set the cookie expiration to the past
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
+		// Secure:   true,
+		// SameSite: http.SameSiteNoneMode,
 	})
 
 	// Clear the refresh token cookie
@@ -379,8 +384,8 @@ func LogOutHandler(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
+		// Secure:   true,
+		// SameSite: http.SameSiteNoneMode,
 	})
 
 	w.WriteHeader(http.StatusOK)
