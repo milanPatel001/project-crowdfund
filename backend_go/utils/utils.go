@@ -22,6 +22,30 @@ var (
 	REFRESH_SECRET []byte
 )
 
+func OtpEmailHtmlTemplate(otp string, fname string) string {
+
+	return fmt.Sprintf(`
+	<!DOCTYPE html>
+		<html>
+			<body>
+				<div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
+					<div style="margin:50px auto;width:70%%;padding:20px 0">
+    					<div style="border-bottom:1px solid #eee">
+	 						 <a href="" style="font-size:1.4em;color: #00466a;text-decoration:none;font-weight:600">CrowdFundX</a>
+    					</div>
+   						<p style="font-size:1.1em">Hi, %s</p>
+   						<p>Use the following OTP to complete your Sign Up. OTP is valid for 5 minutes only.</p>
+    					<h2 style="background: #00466a;margin: 0 auto;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;">%s</h2>
+   						<hr style="border:none;border-top:1px solid #eee" />
+    					<div style="float:right;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">
+      						<p>CrowdfundX</p>
+   						 </div>
+  					</div>
+				</div>
+			</body>
+		</html>`, fname, otp)
+}
+
 func UploadImageToS3(ctx context.Context, s3Client *s3.Client, img []byte, bucketName, key string) error {
 
 	imgReader := bytes.NewReader(img)

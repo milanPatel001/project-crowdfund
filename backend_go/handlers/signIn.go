@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/resend/resend-go/v2"
 )
 
 type Database struct {
@@ -20,7 +21,8 @@ type Database struct {
 }
 
 type Router struct {
-	DB *Database
+	DB           *Database
+	ResendClient *resend.Client
 }
 
 func VerifyToken(w http.ResponseWriter, r *http.Request) {

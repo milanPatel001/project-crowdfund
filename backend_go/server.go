@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
+	"github.com/resend/resend-go/v2"
 	"github.com/stripe/stripe-go/v79"
 )
 
@@ -33,6 +34,7 @@ func main() {
 	utils.AWS_SECRET_ACCESS_KEY = os.Getenv("AWS_SECRET_ACCESS_KEY")
 	utils.AWS_REGION = os.Getenv("AWS_REGION")
 	utils.AWS_BUCKET = os.Getenv("AWS_BUCKET")
+	utils.RESEND_API_KEY = os.Getenv("RESEND_API_KEY")
 
 	if utils.ALLOWED_ORIGIN == "" {
 		utils.ALLOWED_ORIGIN = "https://*"
@@ -65,8 +67,11 @@ func main() {
 	// Create an Amazon S3 service client
 	client := s3.NewFromConfig(cfg)
 
+	//Resend Client
+	resendClient := resend.NewClient(utils.RESEND_API_KEY)
+
 	DB := &handlers.Database{Pool: pool}
-	router := &handlers.Router{DB: DB}
+	router := &handlers.Router{DB: DB, ResendClient: resendClient}
 	awsRouter := &handlers.AWSRouter{DB: DB, Client: client}
 
 	defer router.DB.Pool.Close()

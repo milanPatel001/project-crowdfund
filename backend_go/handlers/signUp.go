@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/resend/resend-go/v2"
 )
 
 func (router *Router) OTPHandler(ctx context.Context) http.HandlerFunc {
@@ -41,6 +43,21 @@ func (router *Router) OTPHandler(ctx context.Context) http.HandlerFunc {
 
 		otp := utils.GenerateOTP()
 		fmt.Println("OTP: ", otp)
+
+		params := &resend.SendEmailRequest{
+			From:    "CrowdFundX <otp@5923999.xyz>",
+			To:      []string{sign.Email},
+			Html:    utils.OtpEmailHtmlTemplate(otp, sign.Fname),
+			Subject: "Signup OTP",
+			ReplyTo: "mp28238@example.com",
+		}
+
+		_, err = router.ResendClient.Emails.Send(params)
+		if err != nil {
+			fmt.Println(err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 		func() {
 			utils.OtpLock.Lock()

@@ -15,6 +15,7 @@ var (
 	AWS_SECRET_ACCESS_KEY string
 	AWS_REGION            string
 	AWS_BUCKET            string
+	RESEND_API_KEY        string
 	GoogleIdentifierMap   = make(map[string]int)
 	GoogleIdentifierLock  = sync.Mutex{}
 	OtpMap                = make(map[string]struct{ Fname, Lname, Password, Email, Otp string })

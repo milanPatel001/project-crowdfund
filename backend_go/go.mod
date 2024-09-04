@@ -31,6 +31,7 @@ require (
 	github.com/jackc/pgx/v5 v5.6.0 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/resend/resend-go/v2 v2.11.0 // indirect
 	github.com/stripe/stripe-go/v79 v79.8.0 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
