@@ -12,7 +12,7 @@ The project follows a server-client model with one central server and multiple c
 
 # Built Using
 
-![Next JS](https://img.shields.io/badge/Next.js-%2320232a.svg?style=for-the-badge&logo=Next.js&logoColor=white) ![React](https://img.shields.io/badge/React-gray?style=for-the-badge&logo=react&logoColor=#FFCA28) ![Golang] (https://img.shields.io/badge/-Go-00ADD8?style=for-the-badge&logo=go&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/tailwind%20CSS-e5e5e5.svg?style=for-the-badge&logo=tailwindcss&logoColor=231572B6) ![Stripe](https://img.shields.io/badge/stripe-black.svg?style=for-the-badge&logo=stripe&logoColor=23430098) ![Neon DB](https://img.shields.io/badge/neon%20db-orange.svg?style=for-the-badge)![Visual Studio Code](https://img.shields.io/badge/Visual%20Studio%20Code-3d85c6.svg?style=for-the-badge&logo=visual-studio-code&logoColor=white)
+![Next JS](https://img.shields.io/badge/Next.js-%2320232a.svg?style=for-the-badge&logo=Next.js&logoColor=white) ![React](https://img.shields.io/badge/React-gray?style=for-the-badge&logo=react&logoColor=#FFCA28) ![Go] (https://img.shields.io/badge/-Go-00ADD8?style=for-the-badge&logo=go&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/tailwind%20CSS-e5e5e5.svg?style=for-the-badge&logo=tailwindcss&logoColor=231572B6) ![Stripe](https://img.shields.io/badge/stripe-black.svg?style=for-the-badge&logo=stripe&logoColor=23430098) ![Neon DB](https://img.shields.io/badge/neon%20db-orange.svg?style=for-the-badge)![Visual Studio Code](https://img.shields.io/badge/Visual%20Studio%20Code-3d85c6.svg?style=for-the-badge&logo=visual-studio-code&logoColor=white)
 
 
 # Screenshots
