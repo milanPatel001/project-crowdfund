@@ -79,6 +79,11 @@ export default function Form() {
         });
   
         if (!res.ok) {
+          if(res.status==403){
+            auth?.logout()
+            return
+          }
+          
           toast.error("Bad request", setToastParam(2000, "top-center"));
           return
         }

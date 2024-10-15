@@ -79,6 +79,7 @@ export default function DonationSection({title, beneficiary} : DonationProps) {
           // },
           body: JSON.stringify(data),
           cache: "no-store",
+          credentials: "include"
         }
       );
 
@@ -90,6 +91,9 @@ export default function DonationSection({title, beneficiary} : DonationProps) {
       ) {
         console.error("Error before json");
         return;
+      }else if(res.status == 403){
+          s?.logout()
+          return
       }
 
       res

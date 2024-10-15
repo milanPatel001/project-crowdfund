@@ -33,6 +33,7 @@ export const SocketProvider : React.FC<SocketProviderProps> = ({ children }) => 
   };
 
   const logout = () => {
+    socket?.close(1000)
     setisAuthenticated(false);
   };
 
@@ -69,7 +70,12 @@ export const SocketProvider : React.FC<SocketProviderProps> = ({ children }) => 
   };
 
   const fetchFundsData = async () => {
-    const res = await fetch(process.env.NEXT_PUBLIC_SERVER_URL + "/fundsData",{ method: "GET" }); //credentials: "include" });
+    const res = await fetch(process.env.NEXT_PUBLIC_SERVER_URL + "/fundsData",{ method: "GET" ,credentials: "include"});
+
+    if(res.status==403){
+      logout()
+      return
+    }
 
     const fundsData : FundsData =  await res.json()
 

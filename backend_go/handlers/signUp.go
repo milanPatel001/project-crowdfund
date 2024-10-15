@@ -61,6 +61,7 @@ func (router *Router) OTPHandler(ctx context.Context) http.HandlerFunc {
 
 		func() {
 			utils.OtpLock.Lock()
+			defer utils.OtpLock.Unlock()
 
 			utils.OtpMap[sign.Email] = struct {
 				Fname    string
@@ -70,7 +71,6 @@ func (router *Router) OTPHandler(ctx context.Context) http.HandlerFunc {
 				Otp      string
 			}{sign.Fname, sign.Lname, sign.Password, sign.Email, otp}
 
-			defer utils.OtpLock.Unlock()
 		}()
 
 		w.WriteHeader(http.StatusOK)

@@ -26,6 +26,11 @@ export default function History() {
       setHistory(result)
 
     }else{
+      if(res.status==403){
+        auth?.logout()
+        return
+      }
+      
       console.warn("Couldn't load!!")
     }
   }

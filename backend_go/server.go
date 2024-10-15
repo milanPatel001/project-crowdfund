@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"backend/handlers"
+	"backend/middlewares"
 	"backend/utils"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -64,10 +65,9 @@ func main() {
 		return
 	}
 
-	// Create an Amazon S3 service client
+	//  Amazon S3 service client
 	client := s3.NewFromConfig(cfg)
 
-	//Resend Client
 	resendClient := resend.NewClient(utils.RESEND_API_KEY)
 
 	DB := &handlers.Database{Pool: pool}
@@ -79,34 +79,40 @@ func main() {
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
-		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{utils.ALLOWED_ORIGIN, "http://localhost:3000"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
-		MaxAge:           86400, // Maximum value not ignored by any of major browsers
+		MaxAge:           86400,
 	}))
 
-	r.Post("/generateOtp", router.OTPHandler(ctx))
-	r.Post("/verifyOtp", router.SignUpHandler(ctx))
+	r.Group(func(r chi.Router) {
+		r.Post("/generateOtp", router.OTPHandler(ctx))
+		r.Post("/verifyOtp", router.SignUpHandler(ctx))
 
-	r.Post("/login", router.LogInHandler(ctx))
-	r.Post("/verifyToken", handlers.VerifyToken)
-	r.HandleFunc("/auth/google", handlers.GoogleLoginHandler)
-	r.HandleFunc("/auth/callback", router.GoogleCallbackHandler(ctx))
-	r.Post("/auth/redirect", handlers.RedirectHandler)
-	r.Get("/logout", handlers.LogOutHandler)
+		r.Post("/login", router.LogInHandler(ctx))
+		r.Post("/verifyToken", handlers.VerifyToken)
+		r.HandleFunc("/auth/google", handlers.GoogleLoginHandler)
+		r.HandleFunc("/auth/callback", router.GoogleCallbackHandler(ctx))
+		r.Post("/auth/redirect", handlers.RedirectHandler)
+		r.Get("/logout", handlers.LogOutHandler)
 
-	r.Get("/ws", router.WsHandler)
+		r.HandleFunc("/webhook", router.StripeWebhookHandler(ctx))
+	})
 
-	r.Get("/fundsData", router.FundsDataHandler(ctx))
-	r.Get("/history", router.HistoryHandler(ctx))
-	r.Post("/createCrowdFund", awsRouter.FundCreationHandler(awsCtx))
+	r.Group(func(r chi.Router) {
+		r.Use(middlewares.VerifyAccessToken)
 
-	r.Post("/createCheckoutSession", handlers.CreateCheckoutSession)
-	r.HandleFunc("/webhook", router.StripeWebhookHandler(ctx))
+		r.Get("/ws", router.WsHandler)
+
+		r.Get("/fundsData", router.FundsDataHandler(ctx))
+		r.Get("/history", router.HistoryHandler(ctx))
+		r.Post("/createCrowdFund", awsRouter.FundCreationHandler(awsCtx))
+
+		r.Post("/createCheckoutSession", handlers.CreateCheckoutSession)
+	})
 
 	fmt.Println("Server starting on port ", port)
 	err = http.ListenAndServe(port, r)
