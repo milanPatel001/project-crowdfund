@@ -17,11 +17,11 @@ The project follows a server-client model with one central server and multiple c
 
 # Screenshots
 
-![Home Page](https://github.com/milanPatel001/project-crowdfund/blob/main/backend/Images/main_page.PNG)
-![Page One](https://github.com/milanPatel001/project-crowdfund/blob/main/backend/Images/fundPageone.PNG)
-![Donation Page](https://github.com/milanPatel001/project-crowdfund/blob/main/backend/Images/donate1.PNG)
-![Share Section](https://github.com/milanPatel001/project-crowdfund/blob/main/backend/Images/share.PNG)
-![Top Section](https://github.com/milanPatel001/project-crowdfund/blob/main/backend/Images/top.PNG)
+![Home Page](https://github.com/milanPatel001/project-crowdfund/blob/main/Images/main_page.PNG)
+![Page One](https://github.com/milanPatel001/project-crowdfund/blob/main/Images/fundPageone.PNG)
+![Donation Page](https://github.com/milanPatel001/project-crowdfund/blob/main/Images/donate1.PNG)
+![Share Section](https://github.com/milanPatel001/project-crowdfund/blob/main/Images/share.PNG)
+![Top Section](https://github.com/milanPatel001/project-crowdfund/blob/main/Images/top.PNG)
 
 Feel free to contribute by opening issues, submitting pull requests, or providing feedback!
 
